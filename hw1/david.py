@@ -4,22 +4,6 @@ import theano
 import time
 import theano.tensor as T
 
-def gen_data(xd = 8, size = 50):
-    x,y= [],[]
-    for i in xrange(size):
-        c,s = [],0
-        for j in xrange(xd):
-            e = random.randint(0,1)
-            c.append(e)
-            s+=e
-        if s>xd/2:
-            s=1
-        else:
-            s=0
-        x.append(c)
-        y.append([s])
-    return [x,y]
-
 class NeuNetwork():
     def __init__(self, dimention):
         self.dimention = dimention
@@ -121,9 +105,3 @@ def sigmoid_prime(z):
     return sigmoid(z)*(1-sigmoid(z))
 
 sigmoid_prime_vec = np.vectorize(sigmoid_prime)
-
-'''
-import david as d
-net = d.NeuNetwork([3,4,1])
-net.work([[[1,1,1],[1,0,1]],[[1],[0]]],1,1,1)
-'''

@@ -4,7 +4,7 @@ import random
 import numpy as np
 
 
-def gen_data(xd = 5, size = 100):
+def gen_data(xd = 6, size = 100):
     x,y= [],[]
     for i in xrange(size):
         c,s = [],0
@@ -20,8 +20,8 @@ def gen_data(xd = 5, size = 100):
     return [x,y]
 
 data = gen_data()
-net = d.NeuNetwork([len(data[0][0]),3,len(data[1][0])])
-net.work(data,10,10,0.1)
+net = d.NeuNetwork([len(data[0][0]),2,len(data[1][0])])
+net.work(data,100,10,0.3)
 
 exit()
 
