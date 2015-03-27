@@ -82,7 +82,8 @@ class NetWork
 				count+=msize;
 				update(x,y,eta);
 				printf("e_val = %lf\n",eval(ValX,ValY));
-				printf("e_in of batch = %lf\n",eval(x,x));
+				cout << ValY[0] <<endl;
+				printf("e_in of batch = %lf\n",eval(x,y));
 				printf("-- epoch %d done \n",i);
 
 			}
