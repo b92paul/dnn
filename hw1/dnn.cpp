@@ -14,7 +14,8 @@ VectorXd sigmoid(VectorXd x)
 }
 VectorXd sigmoid_prime(VectorXd x)
 {
-		return (VectorXd::Ones(x.size())-x).cwiseProduct(x);
+		VectorXd sg = sigmoid(x);
+		return (VectorXd::Ones(x.size())-sg).cwiseProduct(sg);
 }
 class NetWork
 {
@@ -82,7 +83,6 @@ class NetWork
 				count+=msize;
 				update(x,y,eta);
 				printf("e_val = %lf\n",eval(ValX,ValY));
-				cout << ValY[0] <<endl;
 				printf("e_in of batch = %lf\n",eval(x,y));
 				printf("-- epoch %d done \n",i);
 
