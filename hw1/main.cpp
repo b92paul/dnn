@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <Eigen/Dense>
 #include <vector>
+#include "dnn.cpp"
 using namespace std;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
@@ -10,8 +11,10 @@ char testPath[]  = "../../data/merge/test.out";
 char testId[]    = "../../data/merge/test_id.out";
 
 typedef vector<double> VD;
+typedef vector<VectorXd> VXd;
 int check = 100000;
-vector<VectorXd> csvToVecters(char* filename){
+vector<VectorXd> csvToVecters(char* filename, int cut=10000){
+	int idx =0 ;
 	vector<VectorXd> res;
 	printf("%s\n",filename);
 	FILE* csv = fopen(filename, "r");
@@ -30,6 +33,8 @@ vector<VectorXd> csvToVecters(char* filename){
 			res.push_back(tmpXd);
 			tmp.clear();
 			if(res.size()%check ==0)printf("read data: %lu\n",res.size());
+			idx++;
+			if(cut==idx)return res;
 		}	
 	}
 	if(!tmp.empty()){
@@ -40,8 +45,23 @@ vector<VectorXd> csvToVecters(char* filename){
 }
 
 int main(){
-	vector<VectorXd> res = csvToVecters(trainPath);
-	printf("data size = %lu\n",res.size());
+	vector<VectorXd> inputX = csvToVecters(trainPath);
+	printf("data size = %lu\n",inputX.size());
+	vector<VectorXd> inputY = csvToVecters(labelPath);
+	printf("data size = %lu\n",inputY.size());
+	vector<int> x,y ;
+	vector<int> layer;
+	layer.push_back(128);
+	layer.push_back(inputY[0].size());
+	VXd OAO;
+
+
+	int input_size = inputX[0].size();
+	NetWork nn(layer,input_size);
+	nn.SGD(inputX,inputY,0.01,10,20,OAO,OAO);
+	
+
+
 	/* try to out put	
 	for(int i=0;i<res.size();i++){
 		for(int j=0;j<res[i].size();j++){
