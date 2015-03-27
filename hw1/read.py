@@ -1,12 +1,15 @@
 import numpy as np
 
+#train file paths
 train_fbank = "../../data/fbank/train.ark"
 train_mfcc = "../../data/mfcc/train.ark"
 train_label = "../../data/label/train.lab"
 
+# test file paths
 test_fbank = "../../data/fbank/test.ark"
 test_mfcc = "../../data/mfcc/test.ark"
 
+# merge file paths
 train_merge = "../../data/merge/train.out"
 label_merge = "../../data/merge/label.out"
 label_map = "../../data/merge/lmap.out"
@@ -72,14 +75,14 @@ def merge_test(fbank, mfcc):
 
 # read train label and create mapping table
 id_label_mp,label_idx_mp = read_label(train_label,-1)
-'''
+
 # read train data
 data_fbank = read_data(train_fbank,-1)
 data_mfcc = read_data(train_mfcc,-1)
 
 # merge train data
 merge_train(data_fbank, data_mfcc, id_label_mp, label_idx_mp)
-'''
+
 # read test data
 data_fbank_t = read_data(test_fbank, -1)
 data_mfcc_t  = read_data(test_mfcc, -1)
