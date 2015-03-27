@@ -74,11 +74,14 @@ class NetWork
 			int count =0 ;
 			VXd x,y;
 			for(int i=0; i<epochs; i++){
+				printf("epoch %d start\n",i);
 				if(count+msize >= TrainX.size())count=0;
 				x = VXd(TrainX.begin()+count,TrainX.begin()+count+msize);
 				y = VXd(TrainY.begin()+count,TrainY.begin()+count+msize);
 				count+=msize;
 				update(x,y,eta);
+				printf("epoch %d done \n",i);
+
 			}
 		}
 		void update(VXd& bX, VXd& bY,double eta){
