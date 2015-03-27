@@ -102,5 +102,28 @@ class NetWork
 					weight[i] -= eta*delta_w[i]/msize;	
 				}
 		}
-		double eval(VXd ValBatchX){return 0.0;}
+		double eval(VXd ValBatchX,VXd ValBatchY)
+		{
+				int num=0;
+				for(int i=0;i<ValBatchX.size();i++)
+				{
+						VactorXd output = feedfoward(ValBatchX[i]);
+						if(max_number(output) == max_number(ValBatchY[i])) num++;
+				}
+				return (double)num/ValBatchX.size();
+		}
+		int max_number(VectorXd y)
+		{
+				double max=-2147483647;
+				int num=-1;
+				for(int i=0;i<y.size();i++)
+				{
+						if(y(i)>max)
+						{
+								max=y(i);
+								num=i;
+						}
+				}
+				return num;
+		}
 };
