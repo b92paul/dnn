@@ -2,6 +2,7 @@
 #include<cmath>
 #include<vector>
 #include<Eigen/Dense>
+#include<iostream>
 
 using namespace Eigen;
 using namespace std;
@@ -18,10 +19,9 @@ VectorXd sigmoid_prime(VectorXd x)
 class NetWork
 {
 	public:
-		int input_length;//input x vector_length 
 		int layers;
 		int *neuron;
-		int input_size;
+		int input_size; // input x size
 		VectorXd *bias;
 		MatrixXd *weight;
 		
@@ -37,9 +37,9 @@ class NetWork
 						neuron[i]=Neuron[i];
 						bias[i] = VectorXd::Random(neuron[i]);
 						int num;
-						if(i==0) num=input_length;
+						if(i==0) num=input_size;
 						else num=neuron[i-1];
-						weight[i] = MatrixXd::Random(num,neuron[i]); //-1 ~ 1
+						weight[i] = MatrixXd::Random(neuron[i],num); //-1 ~ 1
 				}
 		}
 		VectorXd feedforward(VectorXd x)
@@ -53,7 +53,12 @@ class NetWork
 				activation.push_back(x);
 				for(int i=0;i<layers;i++) 
 				{
+						printf("--layers %d\n",i);
+						cout << x.size()<<endl;
+						cout <<weight[i].size()<<endl;
+						cout <<bias[i].size()<<endl;
 						x=weight[i]*x+bias[i];
+						printf("--layers %d\n",i);
 						zs.push_back(x);
 						x=sigmoid(x);
 						activation.push_back(x);
@@ -79,8 +84,9 @@ class NetWork
 				x = VXd(TrainX.begin()+count,TrainX.begin()+count+msize);
 				y = VXd(TrainY.begin()+count,TrainY.begin()+count+msize);
 				count+=msize;
+				printf("eposh %d start\n",i+1);
 				update(x,y,eta);
-				printf("epoch %d\n",i+1);
+				printf("epoch %d done\n",i+1);
 			}
 		}
 		void update(VXd& bX, VXd& bY,double eta){
@@ -94,6 +100,7 @@ class NetWork
 					else delta_w[i] = MatrixXd::Zero(neuron[i-1],neuron[i]);
 				}
 				for(int i=0;i<bX.size();i++){
+					printf("backprop %d\n",i);
 					back_propgation(bX[i],bY[i],delta_b,delta_w);
 				}
 				for(int i=0;i<layers;i++){
