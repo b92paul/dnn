@@ -13,7 +13,7 @@ char testId[]    = "../../data/merge/test_id.out";
 typedef vector<double> VD;
 typedef vector<VectorXd> VXd;
 int check = 100000;
-vector<VectorXd> csvToVecters(char* filename, int cut=10000){
+vector<VectorXd> csvToVecters(char* filename, int cut=-1){
 	int idx =0 ;
 	vector<VectorXd> res;
 	printf("%s\n",filename);
@@ -49,7 +49,13 @@ int main(){
 	printf("data size = %lu\n",inputX.size());
 	vector<VectorXd> inputY = csvToVecters(labelPath);
 	printf("data size = %lu\n",inputY.size());
-	vector<int> x,y ;
+	int val_size = 5000;
+	VXd valX = VXd(inputX.begin(),inputX.begin()+val_size);
+	VXd valY = VXd(inputY.begin(),inputY.begin()+val_size);
+	VXd trainX = VXd(inputX.begin()+val_size,inputX.end());
+	VXd trainY = VXd(inputY.begin()+val_size,inputY.end());
+
+
 	vector<int> layer;
 	layer.push_back(128);
 	layer.push_back(inputY[0].size());
@@ -58,7 +64,7 @@ int main(){
 
 	int input_size = inputX[0].size();
 	NetWork nn(layer,input_size);
-	nn.SGD(inputX,inputY,0.01,10,20,OAO,OAO);
+	nn.SGD(trainX,trainY,0.01,1000,2000,valX,valY);
 	
 
 

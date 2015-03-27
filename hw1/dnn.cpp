@@ -73,6 +73,7 @@ class NetWork
 		void SGD(VXd& TrainX, VXd& TrainY, double eta, int epochs, int msize,VXd& ValX, VXd& ValY ){
 			int count =0 ;
 			VXd x,y;
+			VXd judge;
 			for(int i=0; i<epochs; i++){
 				printf("epoch %d start\n",i);
 				if(count+msize >= TrainX.size())count=0;
@@ -80,6 +81,7 @@ class NetWork
 				y = VXd(TrainY.begin()+count,TrainY.begin()+count+msize);
 				count+=msize;
 				update(x,y,eta);
+				printf("e_val = %lf\n",eval(x,y));
 				printf("epoch %d done \n",i);
 
 			}
@@ -107,7 +109,7 @@ class NetWork
 				int num=0;
 				for(int i=0;i<ValBatchX.size();i++)
 				{
-						VactorXd output = feedfoward(ValBatchX[i]);
+						VectorXd output = feedforward(ValBatchX[i]);
 						if(max_number(output) == max_number(ValBatchY[i])) num++;
 				}
 				return (double)num/ValBatchX.size();
