@@ -7,7 +7,7 @@ using namespace Eigen;
 using namespace std;
 
 
-VectorXd sigimoid(VectorXd x)
+VectorXd sigmoid(VectorXd x)
 {
 		return (VectorXd((-x).array().exp())+VectorXd::Ones(x.size())).array().inverse();
 }
@@ -17,6 +17,7 @@ VectorXd sigmoid_prime(VectorXd x)
 }
 class NetWork
 {
+	public:
 		int input_length;//input x vector_length 
 		int layers;
 		int *neuron;
@@ -42,7 +43,7 @@ class NetWork
 		}
 		VectorXd feedforward(VectorXd x)
 		{
-				for(int i=0;i<layer;i++) 	x=sigmoid(weight[i]*x+bias[i]);
+				for(int i=0;i<layers;i++) 	x=sigmoid(weight[i]*x+bias[i]);
 				return x;
 		}
 		void back_propgation(VectorXd x,VectorXd y,VectorXd *delta_b,MatrixXd *delta_w)
@@ -51,7 +52,7 @@ class NetWork
 				delta_w = new MatrixXd[layers];
 				vector<VectorXd>activation,zs;
 				activation.push_back(x);
-				for(int i=0;i<layer;i++) 
+				for(int i=0;i<layers;i++) 
 				{
 						x=weight[i]*x+bias[i];
 						zs.push_back(x);
