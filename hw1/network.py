@@ -34,6 +34,9 @@ class Network():
         self.biases = [np.random.randn(y, 1) for y in sizes[1:]]
         self.weights = [np.random.randn(y, x) 
                         for x, y in zip(sizes[:-1], sizes[1:])]
+        print sizes
+        print self.biases
+        print self.weights
 
     def feedforward(self, a):
         """Return the output of the network if ``a`` is input."""
@@ -90,18 +93,23 @@ class Network():
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.weights]
         # feedforward
-        activation = x
-        activations = [x] # list to store all the activations, layer by layer
+        activation = x.transpose()
+        activations = [activation] # list to store all the activations, layer by layer
         zs = [] # list to store all the z vectors, layer by layer
         for b, w in zip(self.biases, self.weights):
+            print "GG {0} {1} {2}".format(w.shape,activation.shape,b.shape)
             z = np.dot(w, activation)+b
             zs.append(z)
-            activation = sigmoid_vec(z)
+            print "z {0}".format(z.shape)
+            activation = np.matrix(sigmoid_vec(z))
             activations.append(activation)
         # backward pass
-        delta = self.cost_derivative(activations[-1], y) * \
-            sigmoid_prime_vec(zs[-1])
+        for c in activations:
+            print c.shape
+        delta = np.multiply(self.cost_derivative(activations[-1], y) , \
+            sigmoid_prime_vec(zs[-1]))
         nabla_b[-1] = delta
+        print delta.shape,activations[-2].transpose().shape
         nabla_w[-1] = np.dot(delta, activations[-2].transpose())
         # Note that the variable l in the loop below is used a little
         # differently to the notation in Chapter 2 of the book.  Here,
@@ -114,6 +122,7 @@ class Network():
             spv = sigmoid_prime_vec(z)
             delta = np.dot(self.weights[-l+1].transpose(), delta) * spv
             nabla_b[-l] = delta
+            print delta.shape, activations[-l-1].transpose().shape
             nabla_w[-l] = np.dot(delta, activations[-l-1].transpose())
         return (nabla_b, nabla_w)
 
@@ -158,10 +167,10 @@ def gen_data(xd = 6, size = 100):
             y.append([0,1])
         else:
             y.append([1,0])
-        x.append(c)
-    return [x,y]
+        x.append(np.array(c))
+    return [np.matrix(x),np.array(y)]
 
 data = gen_data()
-net = Network([len(data[0][0]),2,len(data[1][0])])
+net = Network([6,2,1])
 net.SGD(zip(data[0],data[1]),3,10,0.1, zip(data[0],data[1]))
 
