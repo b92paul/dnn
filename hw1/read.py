@@ -9,7 +9,7 @@ test_mfcc = "../../data/mfcc/test.ark"
 
 train_merge = "../../data/merge/train.out"
 label_merge = "../../data/merge/label.out"
-label_map = "../../data/merge/lamp.out"
+label_map = "../../data/merge/lmap.out"
 test_merge = "../../data/merge/test.out"
 test_id = "../../data/merge/test_id.out"
 
@@ -42,6 +42,7 @@ def read_label(filename, cut = 2000):
         if not label_idx_mp.has_key(tmp[1]):
             label_idx_mp[tmp[1]] = len(label_idx_mp)
     return id_label_mp, label_idx_mp
+
 def idx2array(idx):
     res = np.zeros(48,dtype = float)
     res[idx] = 1
@@ -60,19 +61,33 @@ def merge_train(fbank, mfcc, ilm, lim):
         lb.append(idx2array(idx))
     # np.savetxt(train_merge, np.array(tr), delimiter=",")
     np.savetxt(label_merge, np.array(lb), delimiter=",", fmt='%.1f')
+def merge_test(fbank, mfcc):
+    tm = []
+    ti = open(test_id,'w')
+    for id in data_fbank_t:
+        tm.append(np.concatenate( (fbank[id], mfcc[id])) )
+        ti.write(id+'\n')
+    np.savetxt(test_merge, tm, delimiter=",", fmt='%.8f')
 
-# merge train data
+
+# read train label and create mapping table
+id_label_mp,label_idx_mp = read_label(train_label,-1)
+'''
+# read train data
 data_fbank = read_data(train_fbank,-1)
 data_mfcc = read_data(train_mfcc,-1)
-id_label_mp,label_idx_mp = read_label(train_label,-1)
-merge_train(data_fbank, data_mfcc, id_label_mp, label_idx_mp)
 
-# merge test data
+# merge train data
+merge_train(data_fbank, data_mfcc, id_label_mp, label_idx_mp)
+'''
+# read test data
 data_fbank_t = read_data(test_fbank, -1)
 data_mfcc_t  = read_data(test_mfcc, -1)
-tm = []
-ti = open(test_id,'w')
-for id in data_fbank_t:
-    tm.append(np.concatenate( (data_fbank_t[id], data_mfcc_t[id])) )
-    ti.write(id+'\n')
-np.savetxt(test_merge, tm, delimiter=",", fmt='%.8f')
+
+# merge test data
+merge_test(data_fbank_t, data_mfcc_t)
+
+# ouput map for idx to label
+f_lmap = open(label_map,'w')
+for label in label_idx_mp:
+    f_lmap.write(str(label_idx_mp[label]) + ' ' + label+ '\n')
