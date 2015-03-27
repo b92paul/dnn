@@ -1,8 +1,9 @@
 #!/usr/bin/python
 import david as d
 import random
+import numpy as np
 
-def gen_data(xd = 3, size = 10):
+def gen_data(xd = 5, size = 10):
     x,y= [],[]
     for i in xrange(size):
         c,s = [],0
@@ -15,5 +16,6 @@ def gen_data(xd = 3, size = 10):
         y.append([s])
     return [x,y]
 
-net = d.NeuNetwork([3,4,1])
-net.work(gen_data(),1,2,1)
+data = gen_data()
+net = d.NeuNetwork([len(data[0][0]),3,1])
+net.work(data,1,2,20)
