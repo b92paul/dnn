@@ -3,21 +3,37 @@ import random
 import theano
 import theano.tensor as T
 
+def gen_data(xd = 8, size = 50):
+    x,y= [],[]
+    for i in xrange(size):
+        c,s = [],0
+        for j in xrange(xd):
+            e = random.randint(0,1)
+            c.append(e)
+            s+=e
+        if s>xd/2:
+            s=1
+        else:
+            s=0
+        x.append(c)
+        y.append([s])
+    return [x,y]
+
 class NeuNetwork():
     def __init__(self, dimention):
         self.dimention = dimention
         self.biases = [np.random.randn(y, 1) for y in dimention[1:]]
         self.weights = [np.random.randn(y, x) for x, y in zip(dimention[:-1], dimention[1:])]
-        print self.biases
-        print self.weights
+        #print self.biases.shape
+        #print self.weights.shape
 
     def work(self, data, train_count, mini_batch_size, eta, test_data=None):
         data = self.convert_to_tuple(data)
         training_data,validation_data = self.split_validation(data)
-        self.SGD(training_data, train_count, mini_batch_size, eta, test_data)
+        self.SGD(training_data, train_count, mini_batch_size, eta, validation_data)
 
     def SGD(self, training_data, train_count, mini_batch_size, eta, test_data=None):
-        print training_data
+        #print training_data
         for t in xrange(train_count):
             batches, ebp, total_size = [], 0, len(training_data)
             while ebp < total_size:
@@ -25,8 +41,8 @@ class NeuNetwork():
                 ebp += mini_batch_size
             for batch in batches:
                 self.update_mini_batch(batch, eta)
-            validation_data = training_data
-        print "Time {0}: {1} / {2}".format(0, self.test(validation_data) , len(validation_data))
+            if test_data:
+                print "Time {0}: {1} / {2}".format(t, self.test(test_data) , len(test_data))
 
     def update_mini_batch(self, data, eta):
         new_bs = [np.zeros(b.shape) for b in self.biases]
@@ -49,7 +65,6 @@ class NeuNetwork():
             act = sigmoid_vec(z)
             acts.append(act)
         delta = self.cost(acts[-1],y) * sigmoid_prime_vec(zs[-1])
-        print zs[-1]
         delta_biases[-1] = delta
         delta_weights[-1] = np.dot(delta, acts[-2].transpose())
         for i in xrange(2, len(self.dimention)): # 2...n
@@ -68,15 +83,29 @@ class NeuNetwork():
         return act
 
     def test(self, data):
+        total = 0
+        output = []
         for x,y in data:
-            print "{0} <=> {1}".format(self.feedforward(x),y)
-        return 0
+            output.append(self.feedforward(x))
+            total += output[-1]
+        total /= len(data)
+        cnt = 0
+        for o,(x,y) in zip(output,data):
+            if o>total:
+                c=1
+            else:
+                c=0
+            #print "{0} <=> {1}".format(c,y[0])
+            if c==y[0]:
+                cnt+=1
+        return cnt
 
     def cost(self, my_y, real_y):
         return my_y - real_y
 
     def split_validation(self, data):
-        return data,[]
+        c = int(len(data)*0.8)
+        return data[0:c],data[c:]
 
     def convert_to_tuple(self, data):
         #origin: [ [ x,x,x ], [y,y,y] ]
