@@ -53,26 +53,20 @@ class NetWork
 				activation.push_back(x);
 				for(int i=0;i<layers;i++) 
 				{
-						printf("--layers %d\n",i);
-						cout << x.size()<<endl;
-						cout <<weight[i].size()<<endl;
-						cout <<bias[i].size()<<endl;
 						x=weight[i]*x+bias[i];
-						printf("--layers %d\n",i);
 						zs.push_back(x);
 						x=sigmoid(x);
 						activation.push_back(x);
 				}
-
 				VectorXd d= cost_derivative(x,y).cwiseProduct(sigmoid_prime(zs[layers-1]));
 				delta_b[layers-1] += d;
-				delta_w[layers-1] += d*(x.transpose());
+				delta_w[layers-1] += d*(activation[layers-1].transpose());
 				for(int l=2;l<=layers;l++)
 				{
 						VectorXd spv = sigmoid_prime(zs[layers-l]);
-						d = (weight[layers-l].transpose()*d).cwiseProduct(spv); 
+						d = (weight[layers-l+1].transpose()*d).cwiseProduct(spv); 
 						delta_b[layers-l] += d;
-						delta_w[layers-l] += d*(activation[layers+1-l].transpose());
+						delta_w[layers-l] += d*(activation[layers-l].transpose());
 				}
 		}
 		VectorXd cost_derivative(VectorXd output,VectorXd y){return output-y;}
@@ -84,9 +78,7 @@ class NetWork
 				x = VXd(TrainX.begin()+count,TrainX.begin()+count+msize);
 				y = VXd(TrainY.begin()+count,TrainY.begin()+count+msize);
 				count+=msize;
-				printf("eposh %d start\n",i+1);
 				update(x,y,eta);
-				printf("epoch %d done\n",i+1);
 			}
 		}
 		void update(VXd& bX, VXd& bY,double eta){
@@ -96,11 +88,10 @@ class NetWork
 				MatrixXd* delta_w = new MatrixXd[layers];
 				
 				for(int i=0;i<layers;i++){
-					if(i==0) delta_w[i] = MatrixXd::Zero(input_size,neuron[i]);
-					else delta_w[i] = MatrixXd::Zero(neuron[i-1],neuron[i]);
+					if(i==0) delta_w[i] = MatrixXd::Zero(neuron[i],input_size);
+					else delta_w[i] = MatrixXd::Zero(neuron[i],neuron[i-1]);
 				}
 				for(int i=0;i<bX.size();i++){
-					printf("backprop %d\n",i);
 					back_propgation(bX[i],bY[i],delta_b,delta_w);
 				}
 				for(int i=0;i<layers;i++){
@@ -109,5 +100,4 @@ class NetWork
 				}
 		}
 		double eval(VXd ValBatchX){return 0.0;}
-
 };
