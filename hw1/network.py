@@ -169,7 +169,7 @@ net.SGD(zip(data[0],data[1]),200,10,0.5, zip(data[0],data[1]))
 '''
 def read_x(cut=10000):
     ret = []
-    f=open('../../data/merge/train.out', 'r')
+    f=open('../../data/merge/f_train.out', 'r')
     for i, line in enumerate(f):
         if i==cut:
             break;
@@ -194,7 +194,7 @@ def read_y(cut=10000):
 def work_speech():
     x = read_x()
     y = read_y()
-    net = Network([108, 20, 10, 20, 48])
-    net.SGD(zip(x,y), 50, 400, 0.1,zip(x,y))
+    net = Network([69, 128, 48])
+    net.SGD(zip(x,y), 50, 1000, 0.1,zip(x,y))
 
 work_speech()

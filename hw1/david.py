@@ -25,7 +25,7 @@ class NeuNetwork():
 
     def SGD(self, training_data, train_count, mini_batch_size, eta, test_data=None):
         #if test_data == None:
-        test_data =  training_data
+        #test_data =  training_data
         for t in xrange(train_count):
             random.shuffle(training_data)
             batches, ebp, total_size = [], 0, len(training_data)
@@ -34,12 +34,15 @@ class NeuNetwork():
                 ebp += mini_batch_size
             c_time = time.time()
             for c,batch in enumerate(batches):
-                #print "Start batch %d" % c
+                print "Start batch %d" % c
                 self.update_mini_batch(batch, eta)
+                if c % 20 == 19:
+                    print "current rate: {0} / {1}".format(self.test(test_data) , len(test_data))
+
                 #c+=1
             if test_data:
                 print "Time {0}: {1} / {2}".format(t, self.test(test_data) , len(test_data))
-            #print "use {0} seconds".format(time.time()-c_time)
+            print "use {0} seconds".format(time.time()-c_time)
 
     def update_mini_batch(self, data, eta):
         new_bs = [np.zeros(b.shape) for b in self.biases]
