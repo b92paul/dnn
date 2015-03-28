@@ -3,29 +3,30 @@ import david as d
 import random
 import numpy as np
 
-
-def gen_data(xd = 6, size = 100):
+def gen_data(xd = 10, size = 200):
     x,y= [],[]
     for i in xrange(size):
         c,s = [],0
         for j in xrange(xd):
             e = random.randint(0,1)
-            c.append(e)
+            c.append([e])
             s+=e
         if s>xd/2:
-            y.append([0,1])
+            y.append(np.array([[0],[1]]))
         else:
-            y.append([1,0])
-        x.append(c)
+            y.append(np.array([[1],[0]]))
+        x.append(np.array(c))
+    #print [x,y]
     return [x,y]
 
 data = gen_data()
-net = d.NeuNetwork([len(data[0][0]),2,len(data[1][0])])
-net.work(data,100,10,0.3)
-
+'''
+net = d.NeuNetwork([10,2,2])
+net.work(data,200,10,0.5)
 exit()
+'''
 
-def read_x(cut=5000):
+def read_x(cut=10000):
     ret = []
     f=open('../../data/merge/train.out', 'r')
     for i, line in enumerate(f):
@@ -34,10 +35,10 @@ def read_x(cut=5000):
         if i%10000==0:
             print i
         tmp = line.split(',')
-        ret.append(np.array(tmp,dtype=float))
+        ret.append(np.array([tmp],dtype=float).transpose())
     return ret
 
-def read_y(cut=5000):
+def read_y(cut=10000):
     ret = []
     f=open('../../data/merge/label.out', 'r')
     for i, line in enumerate(f):
@@ -46,13 +47,13 @@ def read_y(cut=5000):
         if i%10000==0:
             print i
         tmp = line.split(',')
-        ret.append(np.array(tmp,dtype=float))
+        ret.append(np.array([tmp],dtype=float).transpose())
     return ret
 
 def work_speech():
     x = read_x()
     y = read_y()
-    net = d.NeuNetwork([108, 30, 30, 48])
-    net.work([x,y], 30, 500, 0.1)
+    net = d.NeuNetwork([108, 128, 48])
+    net.work([x,y], 50, 1000, 0.2)
 
 work_speech()

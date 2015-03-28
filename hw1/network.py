@@ -34,10 +34,7 @@ class Network():
         self.biases = [np.random.randn(y, 1) for y in sizes[1:]]
         self.weights = [np.random.randn(y, x) 
                         for x, y in zip(sizes[:-1], sizes[1:])]
-        print sizes
-        print self.biases
-        print self.weights
-
+    
     def feedforward(self, a):
         """Return the output of the network if ``a`` is input."""
         for b, w in zip(self.biases, self.weights):
@@ -93,23 +90,18 @@ class Network():
         nabla_b = [np.zeros(b.shape) for b in self.biases]
         nabla_w = [np.zeros(w.shape) for w in self.weights]
         # feedforward
-        activation = x.transpose()
+        activation = x
         activations = [activation] # list to store all the activations, layer by layer
         zs = [] # list to store all the z vectors, layer by layer
         for b, w in zip(self.biases, self.weights):
-            print "GG {0} {1} {2}".format(w.shape,activation.shape,b.shape)
             z = np.dot(w, activation)+b
             zs.append(z)
-            print "z {0}".format(z.shape)
-            activation = np.matrix(sigmoid_vec(z))
+            activation = sigmoid_vec(z)
             activations.append(activation)
         # backward pass
-        for c in activations:
-            print c.shape
-        delta = np.multiply(self.cost_derivative(activations[-1], y) , \
-            sigmoid_prime_vec(zs[-1]))
+        delta = self.cost_derivative(activations[-1], y) * \
+            sigmoid_prime_vec(zs[-1])
         nabla_b[-1] = delta
-        print delta.shape,activations[-2].transpose().shape
         nabla_w[-1] = np.dot(delta, activations[-2].transpose())
         # Note that the variable l in the loop below is used a little
         # differently to the notation in Chapter 2 of the book.  Here,
@@ -122,7 +114,6 @@ class Network():
             spv = sigmoid_prime_vec(z)
             delta = np.dot(self.weights[-l+1].transpose(), delta) * spv
             nabla_b[-l] = delta
-            print delta.shape, activations[-l-1].transpose().shape
             nabla_w[-l] = np.dot(delta, activations[-l-1].transpose())
         return (nabla_b, nabla_w)
 
@@ -131,7 +122,7 @@ class Network():
         network outputs the correct result. Note that the neural
         network's output is assumed to be the index of whichever
         neuron in the final layer has the highest activation."""
-        test_results = [(np.argmax(self.feedforward(x)), y) 
+        test_results = [(np.argmax(self.feedforward(x)), np.argmax(y)) 
                         for (x, y) in test_data]
         return sum(int(x == y) for (x, y) in test_results)
         
@@ -155,22 +146,55 @@ sigmoid_prime_vec = np.vectorize(sigmoid_prime)
 
 #test 
 
-def gen_data(xd = 6, size = 100):
+'''
+def gen_data(xd = 10, size = 200):
     x,y= [],[]
     for i in xrange(size):
         c,s = [],0
         for j in xrange(xd):
             e = random.randint(0,1)
-            c.append(e)
+            c.append([e])
             s+=e
         if s>xd/2:
-            y.append([0,1])
+            y.append(np.array([[0],[1]]))
         else:
-            y.append([1,0])
+            y.append(np.array([[1],[0]]))
         x.append(np.array(c))
-    return [np.matrix(x),np.array(y)]
+    #print [x,y]
+    return [x,y]
 
 data = gen_data()
-net = Network([6,2,1])
-net.SGD(zip(data[0],data[1]),3,10,0.1, zip(data[0],data[1]))
+net = Network([10,2,2])
+net.SGD(zip(data[0],data[1]),200,10,0.5, zip(data[0],data[1]))
+'''
+def read_x(cut=10000):
+    ret = []
+    f=open('../../data/merge/train.out', 'r')
+    for i, line in enumerate(f):
+        if i==cut:
+            break;
+        if i%10000==0:
+            print i
+        tmp = line.split(',')
+        ret.append(np.array([tmp],dtype=float).transpose())
+    return ret
 
+def read_y(cut=10000):
+    ret = []
+    f=open('../../data/merge/label.out', 'r')
+    for i, line in enumerate(f):
+        if i==cut:
+            break;
+        if i%10000==0:
+            print i
+        tmp = line.split(',')
+        ret.append(np.array([tmp],dtype=float).transpose())
+    return ret
+
+def work_speech():
+    x = read_x()
+    y = read_y()
+    net = Network([108, 20, 10, 20, 48])
+    net.SGD(zip(x,y), 50, 400, 0.1,zip(x,y))
+
+work_speech()

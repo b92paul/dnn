@@ -9,16 +9,22 @@ class NeuNetwork():
         self.dimention = dimention
         self.biases = [np.random.randn(y, 1) for y in dimention[1:]]
         self.weights = [np.random.randn(y, x) for x, y in zip(dimention[:-1], dimention[1:])]
-        #print self.biases.shape
-        #print self.weights[0].shape
+        '''
+        type of biases and weights are `list of ndarray`
+        '''
 
     def work(self, data, train_count, mini_batch_size, eta, test_data=None):
+        '''
+         data = [  [ x,x...],  [y,y...] ]
+         x is a ndarray of shape dimention[0] * 1
+         y is a ndarray of shape dimention[-1] * 1
+        '''
         data = self.convert_to_tuple(data)
         training_data,validation_data = self.split_validation(data)
         self.SGD(training_data, train_count, mini_batch_size, eta, validation_data)
 
     def SGD(self, training_data, train_count, mini_batch_size, eta, test_data=None):
-        #print training_data
+        #if test_data == None:
         test_data =  training_data
         for t in xrange(train_count):
             random.shuffle(training_data)
@@ -26,15 +32,14 @@ class NeuNetwork():
             while ebp < total_size:
                 batches.append(training_data[ebp:ebp+mini_batch_size])
                 ebp += mini_batch_size
-            c = 0
-            for batch in batches:
-                print "Start batch %d" % c
-                c_time = time.time()
+            c_time = time.time()
+            for c,batch in enumerate(batches):
+                #print "Start batch %d" % c
                 self.update_mini_batch(batch, eta)
-                if test_data:
-                    print "Time {0}: {1} / {2}".format(c, self.test(test_data) , len(test_data))
-                c+=1
-                print "use {0} seconds".format(time.time()-c_time)
+                #c+=1
+            if test_data:
+                print "Time {0}: {1} / {2}".format(t, self.test(test_data) , len(test_data))
+            #print "use {0} seconds".format(time.time()-c_time)
 
     def update_mini_batch(self, data, eta):
         new_bs = [np.zeros(b.shape) for b in self.biases]
@@ -43,14 +48,13 @@ class NeuNetwork():
             delta_bs,delta_ws = self.propagation(x,y)
             new_bs = [b+nb for b,nb in zip(new_bs,delta_bs)]
             new_ws = [w+nw for w,nw in zip(new_ws,delta_ws)]
-        print new_bs
-        self.biases  = np.array([b-(eta/len(data))*nb for b, nb in zip(self.biases, new_bs)])
-        self.weights = [np.matrix(w-(eta/len(data))*nw) for w, nw in zip(self.weights, new_ws)]
+        self.biases  = [b-(eta/len(data))*nb for b, nb in zip(self.biases, new_bs)]
+        self.weights = [w-(eta/len(data))*nw for w, nw in zip(self.weights, new_ws)]
 
 
     def propagation(self, x, y):
         delta_biases,delta_weights = [np.zeros(b.shape) for b in self.biases],[np.zeros(w.shape) for w in self.weights]
-        act = np.matrix(x).transpose()
+        act = x
         acts = [act]
         zs = [[]]
         for w,b in zip(self.weights, self.biases):
@@ -70,7 +74,7 @@ class NeuNetwork():
         return delta_biases,delta_weights
 
     def feedforward(self,x):
-        act = np.matrix(x).transpose()
+        act = x
         for w,b in zip(self.weights, self.biases):
             z = np.dot(w,act)+b
             act = sigmoid_vec(z)
