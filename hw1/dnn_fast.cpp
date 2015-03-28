@@ -3,7 +3,7 @@
 #include<vector>
 #include<Eigen/Dense>
 #include<iostream>
-
+#include<cmath>
 using namespace Eigen;
 using namespace std;
 typedef vector<VectorXd> VXd;
@@ -46,11 +46,11 @@ class NetWork
 				for(int i=0;i<layers;i++) 
 				{
 						neuron[i]=Neuron[i];
-						bias[i] = VectorXd::Random(neuron[i]);
+						bias[i] = VectorXd::Random(neuron[i]) * 3;
 						int num;
 						if(i==0) num=input_size;
 						else num=neuron[i-1];
-						weight[i] = MatrixXd::Random(neuron[i],num); //-1 ~ 1
+						weight[i] = MatrixXd::Random(neuron[i],num)/ sqrt((double)num) *3; //sigma -1 ~ 1
 				}
 		}
 		VectorXd feedforward(VectorXd x)
@@ -74,7 +74,7 @@ class NetWork
 						x=fast_sigmoid(x);
 						activation.push_back(x);
 				}
-				MatrixXd d= fast_cost_derivative(x,y).cwiseProduct(fast_sigmoid_prime(zs[layers-1]));
+				MatrixXd d= fast_cost_derivative(x,y);//.cwiseProduct(fast_sigmoid_prime(zs[layers-1]));
 				delta_b[layers-1] += d.rowwise().sum();
 				for(int i=0;i<d.cols();i++){
 					delta_w[layers-1] += (d.col(i) * activation[layers-1].col(i).T());
@@ -173,7 +173,7 @@ class NetWork
 				int num=-1;
 				for(int i=0;i<y.size();i++)
 				{
-						if(y(i)>max)
+						if(y(i)>= max)
 						{
 								max=y(i);
 								num=i;
