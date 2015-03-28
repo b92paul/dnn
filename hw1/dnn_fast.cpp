@@ -114,7 +114,7 @@ class NetWork
 				end+=msize;
 				update(BX,BY,eta);
 				printf("e_val = %lf\n",eval(ValX,ValY));
-				printf("e_in of batch = %lf\n",eval(x,y));
+				printf("e_in of batch = %lf\n",fast_eval(BX,BY));
 				printf("-- epoch %d done \n",i);
 
 			}
@@ -148,6 +148,17 @@ class NetWork
 				}
 				return (double)num/ValBatchX.size();
 		}
+		double fast_eval(MatrixXd ValBatchX,MatrixXd ValBatchY)
+		{
+				int num=0;
+				for(int i=0;i<ValBatchX.cols();i++)
+				{
+						VectorXd output = feedforward(ValBatchX.col(i));
+						if(max_number(output) == max_number(ValBatchY.col(i))) num++;
+				}
+				return (double)num/ValBatchX.cols();
+		}
+				
 		int max_number(VectorXd y)
 		{
 				double max=-2147483647;
