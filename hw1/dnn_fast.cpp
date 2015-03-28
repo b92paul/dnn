@@ -141,10 +141,18 @@ class NetWork
 		double eval(VXd ValBatchX,VXd ValBatchY)
 		{
 				int num=0;
+				int binN[49]={};
+				int binY[49]={};
 				for(int i=0;i<ValBatchX.size();i++)
 				{
 						VectorXd output = feedforward(ValBatchX[i]);
-						if(max_number(output) == max_number(ValBatchY[i])) num++;
+						int now = max_number(output);
+						binN[now]++;
+						if(now == max_number(ValBatchY[i])) num++,binY[now]++;
+				}
+				for(int i=0;i<49;i++){
+					printf("idx %3d: %4d in %4d| ",i, binY[i], binN[i]);
+					if((i+1) % 7 == 0)puts("");
 				}
 				return (double)num/ValBatchX.size();
 		}
