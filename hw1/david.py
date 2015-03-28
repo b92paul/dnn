@@ -8,8 +8,8 @@ import theano.tensor as T
 class NeuNetwork():
     def __init__(self, dimention):
         self.dimention = dimention
-        self.biases = [2*np.random.rand(y, 1)-1 for y in dimention[1:]]
-        self.weights = [2*np.random.rand(y, x)-1 for x, y in zip(dimention[:-1], dimention[1:])]
+        self.biases = [np.random.randn(y, 1) for y in dimention[1:]]
+        self.weights = [np.random.randn(y, x)/np.sqrt(x) for x, y in zip(dimention[:-1], dimention[1:])]
         #self.biases = [np.zeros((y, 1)) for y in dimention[1:]]
         #self.weights = [np.zeros((y, x)) for x, y in zip(dimention[:-1], dimention[1:])]
         '''
@@ -69,7 +69,7 @@ class NeuNetwork():
             zs.append(z)
             act = sigmoid_vec(z)
             acts.append(act)
-        delta = self.cost(acts[-1],y) * sigmoid_prime_vec(zs[-1])
+        delta = self.cost(acts[-1],y)# * sigmoid_prime_vec(zs[-1])
         delta_biases[-1] = delta
         delta_weights[-1] = np.dot(delta, acts[-2].transpose())
         for i in xrange(2, len(self.dimention)): # 2...n
