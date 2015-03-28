@@ -4,11 +4,14 @@ import theano
 import time
 import theano.tensor as T
 
+
 class NeuNetwork():
     def __init__(self, dimention):
         self.dimention = dimention
-        self.biases = [np.random.randn(y, 1) for y in dimention[1:]]
-        self.weights = [np.random.randn(y, x) for x, y in zip(dimention[:-1], dimention[1:])]
+        self.biases = [2*np.random.rand(y, 1)-1 for y in dimention[1:]]
+        self.weights = [2*np.random.rand(y, x)-1 for x, y in zip(dimention[:-1], dimention[1:])]
+        #self.biases = [np.zeros((y, 1)) for y in dimention[1:]]
+        #self.weights = [np.zeros((y, x)) for x, y in zip(dimention[:-1], dimention[1:])]
         '''
         type of biases and weights are `list of ndarray`
         '''
@@ -19,6 +22,7 @@ class NeuNetwork():
          x is a ndarray of shape dimention[0] * 1
          y is a ndarray of shape dimention[-1] * 1
         '''
+        eta = float(eta)
         data = self.convert_to_tuple(data)
         training_data,validation_data = self.split_validation(data)
         self.SGD(training_data, train_count, mini_batch_size, eta, validation_data)
@@ -53,7 +57,7 @@ class NeuNetwork():
             new_ws = [w+nw for w,nw in zip(new_ws,delta_ws)]
         self.biases  = [b-(eta/len(data))*nb for b, nb in zip(self.biases, new_bs)]
         self.weights = [w-(eta/len(data))*nw for w, nw in zip(self.weights, new_ws)]
-
+        #print new_bs
 
     def propagation(self, x, y):
         delta_biases,delta_weights = [np.zeros(b.shape) for b in self.biases],[np.zeros(w.shape) for w in self.weights]
@@ -79,14 +83,25 @@ class NeuNetwork():
     def feedforward(self,x):
         act = x
         for w,b in zip(self.weights, self.biases):
+            #z = np.dot(w,act)+b
             z = np.dot(w,act)+b
             act = sigmoid_vec(z)
         return act
 
     def test(self, data):
+        c_time = time.time()
         test_results = [(np.argmax(self.feedforward(x)), np.argmax(y)) for (x, y) in data]
+        print "time of feed: {0} seconds".format(time.time()-c_time)
         #print self.biases, self.weights
+        self.statistic_output(test_results)
         return sum(int(x == y) for (x, y) in test_results)
+    def statistic_output(self, results):
+        cnt = {}
+        for c,y in results:
+            if c not in cnt:
+                cnt[c]=0
+            cnt[c]+=1
+        print cnt
 
     def cost(self, my_y, real_y):
         return my_y - real_y

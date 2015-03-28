@@ -53,7 +53,7 @@ def read_y(cut=100000):
 def work_speech():
     x = read_x()
     y = read_y()
-    net = d.NeuNetwork([69, 28, 50, 48])
-    net.work([x,y], 50, 500, 1)
+    net = d.NeuNetwork([69, 28, 58, 48])
+    net.work([x,y], 50, 500, 1.0)
 
 work_speech()

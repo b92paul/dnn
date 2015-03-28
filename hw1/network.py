@@ -167,7 +167,7 @@ data = gen_data()
 net = Network([10,2,2])
 net.SGD(zip(data[0],data[1]),200,10,0.5, zip(data[0],data[1]))
 '''
-def read_x(cut=10000):
+def read_x(cut=100000):
     ret = []
     f=open('../../data/merge/f_train.out', 'r')
     for i, line in enumerate(f):
@@ -179,7 +179,7 @@ def read_x(cut=10000):
         ret.append(np.array([tmp],dtype=float).transpose())
     return ret
 
-def read_y(cut=10000):
+def read_y(cut=100000):
     ret = []
     f=open('../../data/merge/label.out', 'r')
     for i, line in enumerate(f):
@@ -194,7 +194,7 @@ def read_y(cut=10000):
 def work_speech():
     x = read_x()
     y = read_y()
-    net = Network([69, 128, 48])
-    net.SGD(zip(x,y), 50, 1000, 0.1,zip(x,y))
+    net = Network([69, 28, 58, 48])
+    net.SGD(zip(x,y), 50, 500, 0.5,zip(x,y))
 
 work_speech()
