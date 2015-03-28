@@ -1,7 +1,7 @@
 #include <cstdio>
 #include <Eigen/Dense>
 #include <vector>
-#include "dnn.cpp"
+#include "dnn_fast.cpp"
 #include <random>
 using namespace std;
 using Eigen::MatrixXd;
@@ -14,7 +14,7 @@ char testId[]    = "../../data/merge/test_id.out";
 typedef vector<double> VD;
 typedef vector<VectorXd> VXd;
 int check = 100000;
-vector<VectorXd> csvToVecters(char* filename, int cut=100000){
+vector<VectorXd> csvToVecters(char* filename, int cut=300000){
 	int idx =0 ;
 	vector<VectorXd> res;
 	printf("%s\n",filename);
@@ -51,7 +51,7 @@ int main(){
 	printf("data size = %lu\n",inputX.size());
 	vector<VectorXd> inputY = csvToVecters(labelPath);
 	printf("data size = %lu\n",inputY.size());
-	int val_size = 50000;
+	int val_size = 5000;
 	printf("X size = %lu\n",inputX[0].size());
 	printf("Y size = %lu\n",inputY[0].size());
 	for(int i=0;i<inputX.size();i++)idx.push_back(i);
@@ -75,14 +75,14 @@ int main(){
 */
 
 	vector<int> layer;
-	layer.push_back(10);
-	layer.push_back(30);
-	layer.push_back(70);
+	layer.push_back(28);
+	layer.push_back(58);
+	//layer.push_back(70);
 	layer.push_back(inputY[0].size());
 
 	int input_size = inputX[0].size();
 	NetWork nn(layer,input_size);
-	nn.SGD(trainX,trainY,10 ,1000,2000,valX,valY);
+	nn.SGD(trainX,trainY,10 ,100000,500,valX,valY);
 	
 
 
