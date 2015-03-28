@@ -38,6 +38,7 @@ class NetWork
 		int input_size; // input x size
 		VectorXd *bias;
 		MatrixXd *weight;
+		double e_in, e_val;
 		
 		NetWork(vector<int>Neuron, int _input_size):input_size(_input_size)
 		{
@@ -122,7 +123,6 @@ class NetWork
 				update(BX,BY,eta);
 				
 				if((i+1)%num == 0){
-					double e_in, e_val;
 					e_val = eval(ValX,ValY);
 					e_in = fast_eval(BX,BY);
 					printf("e_val = %lf\n",e_val);
@@ -236,16 +236,21 @@ class NetWork
 			}
 			puts("done read 48_39map");
 			
-			string output_path = string("out/test_label_");
+			//filename
+			string output_file = string("");
+			string output_dir = string("out/");
+			//timestamp
 			time_t rawtime;
 			struct tm * timeinfo;
 			time ( &rawtime );
 			timeinfo = localtime ( &rawtime );
-			sprintf(buf, "%s_",asctime (timeinfo));
-
-			output_path += string(buf);
-
-			f = fopen((output_path+".csv").c_str(),"w");
+			//e_val e_in in filename
+			sprintf(buf, "%.4f_%.4f_",e_val,e_in);
+			output_file += buf;
+			sprintf(buf, "%s_t",asctime (timeinfo));
+			output_file += string(buf);
+			f = fopen((output_dir+output_file+".csv").c_str(),"w");
+			//output to file
 			fprintf(f,"Id,Prediction\n");
 			for(int i=0;i<testY.size();i++){
 				fprintf(f,"%s,%s\n",name[i].c_str(),mp[lmap[max_number(testY[i])]].c_str());
