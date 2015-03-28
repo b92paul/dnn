@@ -56,15 +56,17 @@ int main(){
 	printf("Y size = %lu\n",inputY[0].size());
 	for(int i=0;i<inputX.size();i++)idx.push_back(i);
 	random_shuffle(idx.begin(),idx.end());
-	
+
+	double vnorm = 1;
+
 	VXd valX,valY,trainX,trainY;
 	for(int i=0;i<val_size;i++){
-		valX.push_back(inputX[idx[i]]);
-		valY.push_back(inputY[idx[i]]);
+		valX.push_back(inputX[idx[i]]/vnorm);
+		valY.push_back(inputY[idx[i]]/vnorm);
 	}
 	for(int i = val_size; i<inputX.size();i++){
-		trainX.push_back(inputX[idx[i]]);
-		trainY.push_back(inputY[idx[i]]);
+		trainX.push_back(inputX[idx[i]]/vnorm);
+		trainY.push_back(inputY[idx[i]]/vnorm);
 	}
 /*
 
@@ -77,13 +79,21 @@ int main(){
 	vector<int> layer;
 	layer.push_back(28);
 	layer.push_back(58);
+	//layer.push_back(100);
+	//layer.push_back(20);
 	//layer.push_back(70);
 	layer.push_back(inputY[0].size());
 
 	int input_size = inputX[0].size();
 	NetWork nn(layer,input_size);
-	nn.SGD(trainX,trainY,10 ,100000,500,valX,valY);
-	
+	nn.SGD(trainX,trainY,0.5 ,100000,500,valX,valY);
+	/*
+	vector<VectorXd> testX = csvToVecters(testPath);
+	printf("data size = %lu\n",testX.size());
+	vector<VectorXd> testY = nn.feedforward(testX);
+	char outfile[] = "test_label.out";
+	FILE *f = fopen(outfile, "w");
+	*/
 
 
 	/* try to out put	
