@@ -4,6 +4,9 @@
 #include<Eigen/Dense>
 #include<iostream>
 #include<cmath>
+#include<string>
+#include<map>
+#include<time.h>
 using namespace Eigen;
 using namespace std;
 typedef vector<VectorXd> VXd;
@@ -63,7 +66,7 @@ class NetWork
 				for(int i=0;i<layers;i++) 	x=fast_sigmoid(weight[i]*x+bias[i]*(VectorXd::Ones(x.cols()).T()));
 				return x;
 		}
-		void fast_back_propgation(MatrixXd x,MatrixXd y,VectorXd *delta_b,MatrixXd *delta_w)
+		void fast_back_propagation(MatrixXd x,MatrixXd y,VectorXd *delta_b,MatrixXd *delta_w)
 		{
 				vector<MatrixXd>activation,zs;
 				activation.push_back(x);
@@ -92,31 +95,43 @@ class NetWork
 		}
 		VectorXd cost_derivative(VectorXd output,VectorXd y){return output-y;}
 		MatrixXd fast_cost_derivative(MatrixXd output,MatrixXd y){return output-y;}
-		void SGD(VXd& TrainX, VXd& TrainY, double eta, int epochs, int msize,VXd& ValX, VXd& ValY ){
+		void SGD(VXd& TrainX, VXd& TrainY, double eta, int epochs, int msize,VXd& ValX, VXd& ValY ,VXd& testX, 
+										bool findModel = false, vector<int>* param = NULL,
+										vector<pair<double,double> >* ans = NULL){
 			int count =0 ,end=msize;
 			VXd x,y;
 			VXd judge;
 			for(int i=0; i<epochs; i++){
-				printf("-- batch %d start\n",i);
 				if(end >= TrainX.size())count=0,end=msize;
-				
+				//copy matrix
 				MatrixXd BX(TrainX[0].size(),msize);
-				MatrixXd BY(TrainY[0].size(),msize);
-				
+				MatrixXd BY(TrainY[0].size(),msize);	
 				for(int i=count;i< end; i++){
 					BX.col(i-count) << TrainX[i];
 					BY.col(i-count) << TrainY[i];	
 				}
+				count+=msize, end+=msize;
 				
-				//x = VXd(TrainX.begin()+count,TrainX.begin()+count+msize);
-				//y = VXd(TrainY.begin()+count,TrainY.begin()+count+msize);
-				count+=msize;
-				end+=msize;
+				int num = 100;
+				if(findModel){
+					num = (*param)[0];
+					if(i == (*param)[1])break;
+				}
+				
+				//update by back propagation
 				update(BX,BY,eta);
-				if(i%100 == 0){
-					printf("e_val = %lf\n",eval(ValX,ValY));
-					printf("e_in of batch = %lf\n",fast_eval(BX,BY));
+				
+				if((i+1)%num == 0){
+					double e_in, e_val;
+					e_val = eval(ValX,ValY);
+					e_in = fast_eval(BX,BY);
+					printf("e_val = %lf\n",e_val);
+					printf("e_in of batch = %lf\n",e_in);
 					printf("-- batch %d done \n",i);
+					if(findModel)ans->push_back(make_pair(e_val,e_in));
+				}
+				if((i+1)%5000 == 0){
+					Predict(testX);
 				}
 			}
 		}
@@ -132,7 +147,7 @@ class NetWork
 					else delta_w[i] = MatrixXd::Zero(neuron[i],neuron[i-1]);
 				}
 				
-				fast_back_propgation(BX,BY,delta_b,delta_w);
+				fast_back_propagation(BX,BY,delta_b,delta_w);
 				
 				for(int i=0;i<layers;i++){
 					bias[i] -= eta*delta_b[i]/msize;
@@ -181,5 +196,60 @@ class NetWork
 						}
 				}
 				return num;
+		}
+		void Predict(VXd& testX){
+			puts("--predict!!");
+			VXd testY(testX.size());	
+			for(int i=0;i<testX.size();i++){
+				if((i+1)%20000 ==0) printf("predict test:%d\n",i);
+				testY[i] = feedforward(testX[i]);
+			}
+
+			char buf[10000],buf2[10000];
+			int id;
+			
+			char lmap_path[] = "../../data/merge/lmap.out";
+			char testId[]    = "../../data/merge/test_id.out";
+			char map48_39[] = "../../data/phones/48_39.map";
+			// read lmap
+			vector<string> lmap(48);
+			FILE* f = fopen(lmap_path, "r");
+			while(~fscanf(f, "%d %s",&id,buf)){
+				lmap[id] = string(buf);
+			}
+			puts("done read lmap");
+
+			// read testId	
+			vector<string> name;
+			f = fopen(testId,"r");
+			while(~fscanf(f,"%s",buf)){
+				name.push_back(buf);
+			}
+			puts("done read testId");
+
+			// read 48 to 39
+			map<string,string> mp; 
+			f = fopen(map48_39,"r");
+			while(~fscanf(f,"%s",buf)){
+				fscanf(f,"%s",buf2);
+				mp[string(buf)] = string(buf2);
+			}
+			puts("done read 48_39map");
+			
+			string output_path = string("out/test_label_");
+			time_t rawtime;
+			struct tm * timeinfo;
+			time ( &rawtime );
+			timeinfo = localtime ( &rawtime );
+			sprintf(buf, "%s_",asctime (timeinfo));
+
+			output_path += string(buf);
+
+			f = fopen((output_path+".csv").c_str(),"w");
+			fprintf(f,"Id,Prediction\n");
+			for(int i=0;i<testY.size();i++){
+				fprintf(f,"%s,%s\n",name[i].c_str(),mp[lmap[max_number(testY[i])]].c_str());
+			}
+			puts("--predict done!!");
 		}
 };
