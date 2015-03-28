@@ -159,14 +159,14 @@ class NetWork
 		double eval(VXd ValBatchX,VXd ValBatchY)
 		{
 				int num=0;
-				int x[50]={};
+				int x[50]={},y[50]={};
 				for(int i=0;i<ValBatchX.size();i++)
 				{
 						VectorXd output = feedforward(ValBatchX[i]);
-						if(max_number(output) == max_number(ValBatchY[i])) num++;
+						if(max_number(output) == max_number(ValBatchY[i])) num++,y[max_number(output)]++;
 						x[max_number(output)]++;
 				}
-				for(int i=0;i<49;i++) cout<<"count "<<i<<":"<<x[i]<<endl
+				for(int i=0;i<49;i++) cout<<"count "<<i<<":"<<x[i]<<" "<<y[i]<<endl;
 				return (double)num/ValBatchX.size();
 				/*double ans=0;
 				for(int i=0;i<ValBatchX.size();i++)
