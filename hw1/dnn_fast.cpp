@@ -97,7 +97,7 @@ class NetWork
 			VXd x,y;
 			VXd judge;
 			for(int i=0; i<epochs; i++){
-				printf("-- epoch %d start\n",i);
+				printf("-- batch %d start\n",i);
 				if(end >= TrainX.size())count=0,end=msize;
 				
 				MatrixXd BX(TrainX[0].size(),msize);
@@ -113,10 +113,11 @@ class NetWork
 				count+=msize;
 				end+=msize;
 				update(BX,BY,eta);
-				printf("e_val = %lf\n",eval(ValX,ValY));
-				printf("e_in of batch = %lf\n",fast_eval(BX,BY));
-				printf("-- epoch %d done \n",i);
-
+				if(i%100 == 0){
+					printf("e_val = %lf\n",eval(ValX,ValY));
+					printf("e_in of batch = %lf\n",fast_eval(BX,BY));
+					printf("-- batch %d done \n",i);
+				}
 			}
 		}
 		void update(MatrixXd& BX, MatrixXd& BY,double eta){
