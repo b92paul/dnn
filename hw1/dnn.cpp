@@ -3,7 +3,7 @@
 #include<vector>
 #include<Eigen/Dense>
 #include<iostream>
-
+#include<fstream>
 using namespace Eigen;
 using namespace std;
 typedef vector<VectorXd> VXd;
@@ -17,6 +17,15 @@ VectorXd sigmoid_prime(VectorXd x)
 		VectorXd sg = sigmoid(x);
 		return (VectorXd::Ones(x.size())-sg).cwiseProduct(sg);
 }
+/*MatrixXd sigmoid(MatrixXd x)
+{
+		return (MatrixXd((-x).array().exp())+MatrixXd::Ones(x.size())).array().inverse();
+}
+MatrixXd sigmoid_prime(MatrixXd x)
+{
+		MatrixXd sg = sigmoid(x);
+		return (MatrixXd::Ones(x.size())-sg).cwiseProduct(sg);
+}*/
 class NetWork
 {
 	public:
@@ -48,6 +57,28 @@ class NetWork
 				for(int i=0;i<layers;i++) 	x=sigmoid(weight[i]*x+bias[i]);
 				return x;
 		}
+		/*void back_propgation_2(MatrixXd x,MatrixXd y,VectorXd *delta_b,MatrixXd *delta_w)
+		{
+				vector<MatrixXd>activation,zs;
+				activation.push_back(x);
+				for(int i=0;i<layers;i++) 
+				{
+						x=weight[i]*x+bias[i]*(VectorXd:Ones(x.cols())).transpose();
+						zs.push_back(x);
+						x=sigmoid(x);
+						activation.push_back(x);
+				}
+				MatirxXd d= cost_derivative(x,y).cwiseProduct(sigmoid_prime(zs[layers-1]));
+				delta_b[layers-1] += d;
+				delta_w[layers-1] += d*(activation[layers-1].transpose());
+				for(int l=2;l<=layers;l++)
+				{
+						VectorXd spv = sigmoid_prime(zs[layers-l]);
+						d = (weight[layers-l+1].transpose()*d).cwiseProduct(spv); 
+						delta_b[layers-l] += d;
+						delta_w[layers-l] += d*(activation[layers-l].transpose());
+				}
+		}*/
 		void back_propgation(VectorXd x,VectorXd y,VectorXd *delta_b,MatrixXd *delta_w)
 		{
 				vector<VectorXd>activation,zs;
@@ -75,17 +106,33 @@ class NetWork
 			int count =0 ;
 			VXd x,y;
 			VXd judge;
-			for(int i=0; i<epochs; i++){
+		//	for(int i=0; i<epochs; i++){
+			int i=0;
+			double z=0.2;
+			while(true){
 				printf("-- epoch %d start\n",i);
 				if(count+msize >= TrainX.size())count=0;
 				x = VXd(TrainX.begin()+count,TrainX.begin()+count+msize);
 				y = VXd(TrainY.begin()+count,TrainY.begin()+count+msize);
 				count+=msize;
 				update(x,y,eta);
-				printf("e_val = %lf\n",eval(ValX,ValY));
-				printf("e_in of batch = %lf\n",eval(x,y));
+				double eva = eval(ValX,ValY);
+				printf("e_val = %lf\n",eva);
+				//printf("e_in of batch = %lf\n",eval(x,y));
 				printf("-- epoch %d done \n",i);
 
+				i++;
+				if(eva>=z)
+				{
+						fstream file;
+						file.open("output.QAQ",ios::out);
+						for(int j=0;j<layers;j++)
+						{
+								file<<bias[i]<<endl;
+								file<<weight[i]<<endl;
+						}
+						z+=0.1;
+				}
 			}
 		}
 		void update(VXd& bX, VXd& bY,double eta){
@@ -99,9 +146,12 @@ class NetWork
 					else delta_w[i] = MatrixXd::Zero(neuron[i],neuron[i-1]);
 				}
 				for(int i=0;i<bX.size();i++){
+					//if(i%100==0) for(int j=0;j<10;j++) printf("%lf%c",bX[i](j),j==9?'\n':' ');
 					back_propgation(bX[i],bY[i],delta_b,delta_w);
 				}
 				for(int i=0;i<layers;i++){
+					cout<<delta_b[i].maxCoeff()<<endl;
+					cout<<delta_w[i].maxCoeff()<<endl;
 					bias[i] -= eta*delta_b[i]/msize;
 					weight[i] -= eta*delta_w[i]/msize;	
 				}
@@ -113,8 +163,20 @@ class NetWork
 				{
 						VectorXd output = feedforward(ValBatchX[i]);
 						if(max_number(output) == max_number(ValBatchY[i])) num++;
+						cout<<"QQ "<<max_number(output)<<endl;
 				}
 				return (double)num/ValBatchX.size();
+				/*double ans=0;
+				for(int i=0;i<ValBatchX.size();i++)
+				{
+					double a=0;
+					VectorXd output = feedforward(ValBatchX[i]);
+					for(int j=0;j<output.size();j++) a+=(ValBatchY[i](j)-output(j))*(ValBatchY[i](j)-output(j));
+					a=a/output.size();
+					ans+=a;
+				}
+				ans=ans/ValBatchX.size();
+				return ans;*/
 		}
 		int max_number(VectorXd y)
 		{
