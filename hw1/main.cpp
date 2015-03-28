@@ -14,7 +14,7 @@ char testId[]    = "../../data/merge/test_id.out";
 typedef vector<double> VD;
 typedef vector<VectorXd> VXd;
 int check = 100000;
-vector<VectorXd> csvToVecters(char* filename, int cut=300000){
+vector<VectorXd> csvToVecters(char* filename, int cut=-1){
 	int idx =0 ;
 	vector<VectorXd> res;
 	printf("%s\n",filename);
@@ -57,6 +57,7 @@ int main(){
 	for(int i=0;i<inputX.size();i++)idx.push_back(i);
 	random_shuffle(idx.begin(),idx.end());
 
+	// norm input vector
 	double vnorm = 1;
 
 	VXd valX,valY,trainX,trainY;
@@ -68,14 +69,8 @@ int main(){
 		trainX.push_back(inputX[idx[i]]/vnorm);
 		trainY.push_back(inputY[idx[i]]/vnorm);
 	}
-/*
 
-	VXd valX = VXd(inputX.begin(),inputX.begin()+val_size);
-	VXd valY = VXd(inputY.begin(),inputY.begin()+val_size);
-	VXd trainX = VXd(inputX.begin()+val_size,inputX.end());
-	VXd trainY = VXd(inputY.begin()+val_size,inputY.end());
-*/
-
+	// new network
 	vector<int> layer;
 	layer.push_back(28);
 	layer.push_back(58);
@@ -86,24 +81,14 @@ int main(){
 
 	int input_size = inputX[0].size();
 	NetWork nn(layer,input_size);
-	nn.SGD(trainX,trainY,0.5 ,100000,500,valX,valY);
-	/*
+	
+	//read test data
 	vector<VectorXd> testX = csvToVecters(testPath);
 	printf("data size = %lu\n",testX.size());
-	vector<VectorXd> testY = nn.feedforward(testX);
-	char outfile[] = "test_label.out";
-	FILE *f = fopen(outfile, "w");
-	*/
+	nn.SGD(trainX,trainY,0.5 ,300000,500,valX,valY,testX);
 
-
-	/* try to out put	
-	for(int i=0;i<res.size();i++){
-		for(int j=0;j<res[i].size();j++){
-			printf("%lf,",res[i][j]);
-		}
-		puts("");
-	}
-	*/
+	//nn.Predict(testX);
+	
 	return 0;
 
 }
