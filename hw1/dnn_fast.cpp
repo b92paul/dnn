@@ -35,18 +35,21 @@ class NetWork
 {
 	public:
 		int layers;
+		double momentum;
 		int *neuron;
 		int input_size; // input x size
 		VectorXd *bias;
 		MatrixXd *weight;
 		double e_in, e_val;
 		VectorXd* delta_b;
+		VectorXd* delta_b_old;
 		MatrixXd* delta_w;
+		MatrixXd* delta_w_old;
 		MatrixXd *zs;
 		MatrixXd *activation;
 		bool printTest;
-		NetWork(vector<int>Neuron, int _input_size,bool _printTest=false)
-						:input_size(_input_size),printTest(_printTest)
+		NetWork(vector<int>Neuron, int _input_size,double _momentum=0,bool _printTest=false)
+						:input_size(_input_size),printTest(_printTest),momentum(_momentum)
 		{
 				layers = Neuron.size();
 				neuron = new int[layers];
@@ -56,7 +59,8 @@ class NetWork
 				delta_w = new MatrixXd[layers];
 				activation = new MatrixXd[layers+1];
 				zs = new MatrixXd[layers];
-
+				delta_b_old = new VectorXd[layers];
+				delta_w_old = new MatrixXd[layers];
 				srand(time(NULL));
 				for(int i=0;i<layers;i++) 
 				{
@@ -66,6 +70,9 @@ class NetWork
 						if(i==0) num=input_size;
 						else num=neuron[i-1];
 						weight[i] = MatrixXd::Random(neuron[i],num)/ sqrt((double)num) *3; //sigma -1 ~ 1
+						delta_b_old[i] = VectorXd::Zero(neuron[i]);
+						if(i==0) delta_w_old[i] = MatrixXd::Zero(neuron[i],input_size);
+						else delta_w_old[i] = MatrixXd::Zero(neuron[i],neuron[i-1]);
 				}
 		}
 		~NetWork(){
@@ -76,6 +83,8 @@ class NetWork
 			delete[] delta_w;
 			delete[] zs;
 			delete[] activation;
+			delete[] delta_b_old;
+			delete[] delta_w_old;
 		}
 		VectorXd feedforward(VectorXd x)
 		{
@@ -146,7 +155,7 @@ class NetWork
 				char color[]="\033[0;32m";
 				char NC[]="\033[0m";
 				//update by back propagation
-				update(BX.block(0,count,TrainX[0].size(),msize),BY.block(0,count,TrainY[0].size(),msize),eta);
+				update(BX.block(0,count,TrainX[0].size(),msize),BY.block(0,count,TrainY[0].size(),msize),eta,i);
 				if((i+1)%num == 0){
 					e_val = eval(ValX,ValY);
 					e_in = fast_eval(BX.block(0,count,TrainX[0].size(),msize),BY.block(0,count,TrainY[0].size(),msize));
@@ -164,17 +173,32 @@ class NetWork
 				}
 			}
 		}
-		void update(Block<MatrixXd> BX, Block<MatrixXd> BY,double eta){
+		void update(Block<MatrixXd> BX, Block<MatrixXd> BY,double eta,int time){
 				double msize = (double)BX.cols();
-				for(int i=0;i<layers;i++)delta_b[i] = VectorXd::Zero(neuron[i]);
-				for(int i=0;i<layers;i++){
-					if(i==0) delta_w[i] = MatrixXd::Zero(neuron[i],input_size);
-					else delta_w[i] = MatrixXd::Zero(neuron[i],neuron[i-1]);
+				if(time%2==0)
+				{
+					for(int i=0;i<layers;i++){
+						delta_b[i] = VectorXd::Zero(neuron[i]);
+						if(i==0) delta_w[i] = MatrixXd::Zero(neuron[i],input_size);
+						else delta_w[i] = MatrixXd::Zero(neuron[i],neuron[i-1]);
+					}
+					fast_back_propagation(BX,BY,delta_b,delta_w);
+					for(int i=0;i<layers;i++){
+						bias[i] -= eta*(delta_b[i]+delta_b_old[i]*momentum)/msize;
+						weight[i] -= eta*(delta_w[i]+delta_w_old[i]*momentum)/msize;	
+					}
 				}
-				fast_back_propagation(BX,BY,delta_b,delta_w);
-				for(int i=0;i<layers;i++){
-					bias[i] -= eta*delta_b[i]/msize;
-					weight[i] -= eta*delta_w[i]/msize;	
+				else {
+					for(int i=0;i<layers;i++){
+						delta_b_old[i] = VectorXd::Zero(neuron[i]);
+						if(i==0) delta_w_old[i] = MatrixXd::Zero(neuron[i],input_size);
+						else delta_w_old[i] = MatrixXd::Zero(neuron[i],neuron[i-1]);
+					}
+					fast_back_propagation(BX,BY,delta_b_old,delta_w_old);
+					for(int i=0;i<layers;i++){
+						bias[i] -= eta*(delta_b_old[i]+delta_b[i]*momentum)/msize;
+						weight[i] -= eta*(delta_w_old[i]+delta_w[i]*momentum)/msize;	
+					}
 				}
 		}
 		double eval(VXd& ValBatchX,VXd& ValBatchY)
