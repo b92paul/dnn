@@ -5,9 +5,9 @@ $models = []
 
 def file_to_obj(filename)
   ret = {}
-  ret[:model] = {}  
-  ret[:model][:neuron]=filename.scan(/[0-9]+_[0-9]+_[0-9]+_[0-9]+/)[0].split('_')[0..-2].map(&:to_i)
-  ret[:model][:eta] = filename.scan(/[0-9]+_[0-9]+_[0-9]+_[0-9]+/)[0].split('_')[-1].to_f / 10.0
+  ret[:model] = {} 
+  ret[:model][:neuron]=filename.scan(/[0-9][[0-9]*_]+[0-9]+.res$/)[0].split('_')[0..-2].map(&:to_i)
+  ret[:model][:eta] = filename.scan(/[0-9][[0-9]*_]+[0-9]+.res$/)[0].split('_')[-1].to_f / 10.0
   ret[:data] = {}
   ret[:data][:raw] = []
   File.open(filename,'r'){|f|
