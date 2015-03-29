@@ -33,8 +33,8 @@ def simple_statistics
 end
 
 def output_csv
-  puts '"neuron","eta",' + (1..20).to_a.map{|c|c*1000}.join(',')
-  $models.each{|f|
+#  puts '"neuron","eta",' + (1..20).to_a.map{|c|c*1000}.join(',')
+  $models.sort_by{|c|c[:model][:neuron].to_s+c[:model][:eta].to_s}.each{|f|
     puts "\"#{f[:model][:neuron]}\",\"#{f[:model][:eta]}\"," + f[:data][:raw].join(',')
   }
 end
