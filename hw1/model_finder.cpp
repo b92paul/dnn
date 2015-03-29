@@ -55,7 +55,7 @@ void go(vector<int>layer,double eta,VXd& trainX, VXd& trainY, VXd& valX, VXd& va
 	VXd valTest;
 	nn.SGD(trainX,trainY,eta ,100000,500,valX,valY,valTest,true,&params,&ret);
 	char filename[100];
-	if(layer.size() < 3+1)layer.push_back(-1);
+	if(layer.size() < 3+1)layer[2]=0;
 	sprintf(filename, "models/model_finder_%d_%d_%d_%d.res",layer[0],layer[1],layer[2],(int)(eta*10));
 	FILE *f = fopen(filename, "w");
 	for(int i=0;i<ret.size();i++)
@@ -70,16 +70,16 @@ int randint(int a,int b) {
 void model_finder(VXd& trainX, VXd& trainY, VXd& valX, VXd& valY) {
 	for(int i=0;i<50;i++) {
 		vector<int>layer;
-		int a=randint(20,100);
-		int b=randint(20,100);
+		int a=randint(2,10)*10;
+		int b=randint(2,10)*10;
 		layer.push_back(a);
 		layer.push_back(b);
 		if(rand()&1) {
-			layer.push_back(randint(20,100));
+			layer.push_back(randint(2,10)*10);
 		}
 		layer.push_back(trainY[0].size());
-		for(int j=0;j<10;j++) {
-			double eta = 0.1*(j+1);
+		for(int j=3;j<=7;j++) {
+			double eta = 0.1*(j);
 			go(layer,eta,trainX,trainY,valX,valY);
 		}
 	}
