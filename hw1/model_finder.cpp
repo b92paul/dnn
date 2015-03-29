@@ -14,7 +14,7 @@ char testId[]    = "../../data/merge/test_id.out";
 typedef vector<double> VD;
 typedef vector<VectorXd> VXd;
 int check = 100000;
-vector<VectorXd> csvToVecters(char* filename, int cut=300000){
+vector<VectorXd> csvToVecters(char* filename, int cut=-1){
 	int idx =0 ;
 	vector<VectorXd> res;
 	printf("%s\n",filename);
@@ -50,8 +50,8 @@ void go(vector<int>layer,double eta,VXd& trainX, VXd& trainY, VXd& valX, VXd& va
 	NetWork nn(layer,input_size);
 	vector<int>params;
 	vector<pair<double,double> > ret;
-	params.push_back(100);
-	params.push_back(2000);
+	params.push_back(1000);
+	params.push_back(20000);
 	VXd valTest;
 	nn.SGD(trainX,trainY,eta ,100000,500,valX,valY,valTest,true,&params,&ret);
 	char filename[100];
@@ -78,7 +78,7 @@ void model_finder(VXd& trainX, VXd& trainY, VXd& valX, VXd& valY) {
 			layer.push_back(randint(2,10)*10);
 		}
 		layer.push_back(trainY[0].size());
-		for(int j=3;j<=7;j++) {
+		for(int j=3;j<=6;j++) {
 			double eta = 0.1*(j);
 			go(layer,eta,trainX,trainY,valX,valY);
 		}
