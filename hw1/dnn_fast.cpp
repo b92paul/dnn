@@ -44,7 +44,9 @@ class NetWork
 		MatrixXd* delta_w;
 		MatrixXd *zs;
 		MatrixXd *activation;
-		NetWork(vector<int>Neuron, int _input_size):input_size(_input_size)
+		bool printTest;
+		NetWork(vector<int>Neuron, int _input_size,bool _printTest=false)
+						:input_size(_input_size),printTest(_printTest)
 		{
 				layers = Neuron.size();
 				neuron = new int[layers];
@@ -126,7 +128,7 @@ class NetWork
 			VXd judge;
 			clock_t start_time = clock();
 			for(int i=0; i<epochs; i++){
-				if(end >= TrainX.size())count=0,end=msize;
+				if(end > TrainX.size())count=0,end=msize;
 				/*copy matrix
 				MatrixXd BX(TrainX[0].size(),msize);
 				MatrixXd BY(TrainY[0].size(),msize);	
@@ -134,17 +136,15 @@ class NetWork
 					BX.col(i-count) << TrainX[i];
 					BY.col(i-count) << TrainY[i];	
 				}*/
-				count+=msize, end+=msize;
 				
 				int num = 1000;
 				if(findModel){
 					num = (*param)[0];
 					if(i == (*param)[1])break;
 				}
-
+				//print color
 				char color[]="\033[0;32m";
 				char NC[]="\033[0m";
-
 				//update by back propagation
 				update(BX.block(0,count,TrainX[0].size(),msize),BY.block(0,count,TrainY[0].size(),msize),eta);
 				if((i+1)%num == 0){
@@ -158,10 +158,10 @@ class NetWork
 					if(findModel)ans->push_back(make_pair(e_val,e_in));
 					start_time = clock();	
 				}
-				/*
-				if((i+1)%5000 == 0){
+				count+=msize, end+=msize;
+				if(printTest && (i+1)%5000 == 0){
 					Predict(testX);
-				}*/
+				}
 			}
 		}
 		void update(Block<MatrixXd> BX, Block<MatrixXd> BY,double eta){
@@ -240,6 +240,7 @@ class NetWork
 			while(~fscanf(f, "%d %s",&id,buf)){
 				lmap[id] = string(buf);
 			}
+			fclose(f);
 			puts("done read lmap");
 
 			// read testId	
@@ -248,15 +249,16 @@ class NetWork
 			while(~fscanf(f,"%s",buf)){
 				name.push_back(buf);
 			}
+			fclose(f);
 			puts("done read testId");
 
 			// read 48 to 39
 			map<string,string> mp; 
 			f = fopen(map48_39,"r");
-			while(~fscanf(f,"%s",buf)){
-				fscanf(f,"%s",buf2);
+			while(~fscanf(f,"%s %s",buf,buf2)){
 				mp[string(buf)] = string(buf2);
 			}
+			fclose(f);
 			puts("done read 48_39map");
 			
 			//filename
@@ -278,6 +280,7 @@ class NetWork
 			for(int i=0;i<testY.size();i++){
 				fprintf(f,"%s,%s\n",name[i].c_str(),mp[lmap[max_number(testY[i])]].c_str());
 			}
+			fclose(f);
 			puts("--predict done!!");
 		}
 };
