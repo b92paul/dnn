@@ -42,7 +42,8 @@ class NetWork
 		double e_in, e_val;
 		VectorXd* delta_b;
 		MatrixXd* delta_w;
-		
+		MatrixXd *zs;
+		MatrixXd *activation;
 		NetWork(vector<int>Neuron, int _input_size):input_size(_input_size)
 		{
 				layers = Neuron.size();
@@ -51,6 +52,8 @@ class NetWork
 				weight = new MatrixXd[layers];
 				delta_b = new VectorXd[layers];
 				delta_w = new MatrixXd[layers];
+				activation = new MatrixXd[layers+1];
+				zs = new MatrixXd[layers];
 
 				srand(time(NULL));
 				for(int i=0;i<layers;i++) 
@@ -69,6 +72,8 @@ class NetWork
 			delete[] weight;
 			delete[] delta_b;
 			delete[] delta_w;
+			delete[] zs;
+			delete[] activation;
 		}
 		VectorXd feedforward(VectorXd x)
 		{
@@ -80,26 +85,22 @@ class NetWork
 				for(int i=0;i<layers;i++) 	x=fast_sigmoid(weight[i]*x+bias[i]*(VectorXd::Ones(x.cols()).T()));
 				return x;
 		}
-		void fast_back_propagation(MatrixXd x,MatrixXd y,VectorXd *delta_b,MatrixXd *delta_w)
+		void fast_back_propagation(const MatrixXd& x,const MatrixXd& y,VectorXd *delta_b,MatrixXd *delta_w)
 		{
-				vector<MatrixXd>activation,zs;
-				activation.push_back(x);
+				activation[0]=x;
 				for(int i=0;i<layers;i++) 
 				{
-						x=weight[i]*x+bias[i]* (VectorXd::Ones(x.cols()).T()) ;
-						zs.push_back(x);
-						x=fast_sigmoid(x);
-						activation.push_back(x);
+						zs[i]=weight[i]*activation[i]+bias[i]* (VectorXd::Ones(x.cols()).T()) ;
+						activation[i+1]=fast_sigmoid(zs[i]);
 				}
-				MatrixXd d= fast_cost_derivative(x,y);//.cwiseProduct(fast_sigmoid_prime(zs[layers-1]));
+				MatrixXd d= fast_cost_derivative(activation[layers],y);//.cwiseProduct(fast_sigmoid_prime(zs[layers-1]));
 				delta_b[layers-1] += d.rowwise().sum();
 				for(int i=0;i<d.cols();i++){
 					delta_w[layers-1] += (d.col(i) * activation[layers-1].col(i).T());
 				}
 				for(int l=2;l<=layers;l++)
 				{
-						MatrixXd spv = fast_sigmoid_prime(zs[layers-l]);
-						d = (weight[layers-l+1].T()*d).cwiseProduct(spv); 
+						d = (weight[layers-l+1].T()*d).cwiseProduct(fast_sigmoid_prime(zs[layers-l])); 
 						delta_b[layers-l] += d.rowwise().sum();
 						for(int i=0;i<d.cols();i++){
 							delta_w[layers-l] += (d.col(i) * activation[layers-l].col(i).T());
@@ -108,24 +109,31 @@ class NetWork
 				}
 		}
 		VectorXd cost_derivative(VectorXd output,VectorXd y){return output-y;}
-		MatrixXd fast_cost_derivative(MatrixXd& output,MatrixXd& y){return output-y;}
+		MatrixXd fast_cost_derivative(MatrixXd& output,const MatrixXd& y){return output-y;}
 
 		void SGD(VXd& TrainX, VXd& TrainY, double eta, int epochs, int msize,VXd& ValX, VXd& ValY ,VXd& testX, 
 										bool findModel = false, vector<int>* param = NULL,
 										vector<pair<double,double> >* ans = NULL){
 			int count =0 ,end=msize;
+			MatrixXd BX(TrainX[0].size(),TrainX.size());
+			MatrixXd BY(TrainY[0].size(),TrainY.size());
+			for(int i=0;i<TrainX.size();i++)
+			{
+					BX.col(i)<<TrainX[i];
+					BY.col(i)<<TrainY[i];
+			}
 			VXd x,y;
 			VXd judge;
 			clock_t start_time = clock();
 			for(int i=0; i<epochs; i++){
 				if(end >= TrainX.size())count=0,end=msize;
-				//copy matrix
+				/*copy matrix
 				MatrixXd BX(TrainX[0].size(),msize);
 				MatrixXd BY(TrainY[0].size(),msize);	
 				for(int i=count;i< end; i++){
 					BX.col(i-count) << TrainX[i];
 					BY.col(i-count) << TrainY[i];	
-				}
+				}*/
 				count+=msize, end+=msize;
 				
 				int num = 1000;
@@ -138,11 +146,10 @@ class NetWork
 				char NC[]="\033[0m";
 
 				//update by back propagation
-				update(BX,BY,eta);
+				update(BX.block(0,count,TrainX[0].size(),msize),BY.block(0,count,TrainY[0].size(),msize),eta);
 				if((i+1)%num == 0){
 					e_val = eval(ValX,ValY);
-					e_in = fast_eval(BX,BY);
-
+					e_in = fast_eval(BX.block(0,count,TrainX[0].size(),msize),BY.block(0,count,TrainY[0].size(),msize));
 					printf("%s-- Spend %f time to train %d batch.\n",
 													color,((float)(clock()-start_time))/CLOCKS_PER_SEC,num);
 					printf("e_val = %lf\n",e_val);
@@ -157,18 +164,14 @@ class NetWork
 				}*/
 			}
 		}
-		void update(MatrixXd& BX, MatrixXd& BY,double eta){
+		void update(Block<MatrixXd> BX, Block<MatrixXd> BY,double eta){
 				double msize = (double)BX.cols();
-				
 				for(int i=0;i<layers;i++)delta_b[i] = VectorXd::Zero(neuron[i]);
-				
 				for(int i=0;i<layers;i++){
 					if(i==0) delta_w[i] = MatrixXd::Zero(neuron[i],input_size);
 					else delta_w[i] = MatrixXd::Zero(neuron[i],neuron[i-1]);
 				}
-				
 				fast_back_propagation(BX,BY,delta_b,delta_w);
-				
 				for(int i=0;i<layers;i++){
 					bias[i] -= eta*delta_b[i]/msize;
 					weight[i] -= eta*delta_w[i]/msize;	
@@ -192,7 +195,7 @@ class NetWork
 				}
 				return (double)num/ValBatchX.size();
 		}
-		double fast_eval(MatrixXd& ValBatchX,MatrixXd& ValBatchY)
+		double fast_eval(Block<MatrixXd> ValBatchX,Block<MatrixXd> ValBatchY)
 		{
 				int num=0;
 				for(int i=0;i<ValBatchX.cols();i++)
