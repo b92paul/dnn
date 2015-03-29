@@ -7,6 +7,7 @@
 #include<string>
 #include<map>
 #include<time.h>
+#include<ctime>
 using namespace Eigen;
 using namespace std;
 typedef vector<VectorXd> VXd;
@@ -115,6 +116,7 @@ class NetWork
 			int count =0 ,end=msize;
 			VXd x,y;
 			VXd judge;
+			clock_t start_time = clock();
 			for(int i=0; i<epochs; i++){
 				if(end >= TrainX.size())count=0,end=msize;
 				//copy matrix
@@ -131,17 +133,23 @@ class NetWork
 					num = (*param)[0];
 					if(i == (*param)[1])break;
 				}
-				
+
+				char color[]="\033[0;32m";
+				char NC[]="\033[0m";
+
 				//update by back propagation
 				update(BX,BY,eta);
-				
 				if((i+1)%num == 0){
 					e_val = eval(ValX,ValY);
 					e_in = fast_eval(BX,BY);
+
+					printf("%s-- Spend %f time to train %d batch.\n",
+													color,((float)(clock()-start_time))/CLOCKS_PER_SEC,num);
 					printf("e_val = %lf\n",e_val);
 					printf("e_in of batch = %lf\n",e_in);
-					printf("-- batch %d done \n",i+1);
+					printf("-- batch %d done.%s\n",i+1,NC);
 					if(findModel)ans->push_back(make_pair(e_val,e_in));
+					start_time = clock();	
 				}
 				/*
 				if((i+1)%5000 == 0){
