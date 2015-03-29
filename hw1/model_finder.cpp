@@ -3,6 +3,10 @@
 #include <vector>
 #include "dnn_fast.cpp"
 #include <random>
+#include <algorithm>
+#include <string>
+#include <cstdlib>
+#include <cstring>
 using namespace std;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
@@ -14,7 +18,7 @@ char testId[]    = "../../data/merge/test_id.out";
 typedef vector<double> VD;
 typedef vector<VectorXd> VXd;
 int check = 100000;
-vector<VectorXd> csvToVecters(char* filename, int cut=300000){
+vector<VectorXd> csvToVecters(char* filename, int cut=-1){
 	int idx =0 ;
 	vector<VectorXd> res;
 	printf("%s\n",filename);
@@ -44,19 +48,23 @@ vector<VectorXd> csvToVecters(char* filename, int cut=300000){
 	}
 	return res;
 }
-#include <algorithm>
+string itoa(int n){char buf[10];sprintf(buf,"%d",n);return buf;}
 void go(vector<int>layer,double eta,VXd& trainX, VXd& trainY, VXd& valX, VXd& valY) {
 	int input_size = trainX[0].size();
 	NetWork nn(layer,input_size);
 	vector<int>params;
 	vector<pair<double,double> > ret;
-	params.push_back(100);
-	params.push_back(2000);
+	params.push_back(1000);
+	params.push_back(20000);
 	VXd valTest;
 	nn.SGD(trainX,trainY,eta ,100000,500,valX,valY,valTest,true,&params,&ret);
 	char filename[100];
-	if(layer.size() < 3+1)layer[2]=0;
-	sprintf(filename, "models/model_finder_%d_%d_%d_%d.res",layer[0],layer[1],layer[2],(int)(eta*10));
+	string tmp = "";
+	for(int i=0;i<layer.size()-1;i++) {
+		tmp += itoa(layer[i]);
+		tmp += "_";
+	}
+	sprintf(filename, "models/model_finder_%s%d.res",tmp.c_str(),(int)(eta*10));
 	FILE *f = fopen(filename, "w");
 	for(int i=0;i<ret.size();i++)
 		fprintf(f,"%lf %lf\n",ret[i].first,ret[i].second);
@@ -70,15 +78,12 @@ int randint(int a,int b) {
 void model_finder(VXd& trainX, VXd& trainY, VXd& valX, VXd& valY) {
 	for(int i=0;i<50;i++) {
 		vector<int>layer;
-		int a=randint(2,10)*10;
-		int b=randint(2,10)*10;
-		layer.push_back(a);
-		layer.push_back(b);
-		if(rand()&1) {
+		int layer_size = rand()%3+2; // 2~4
+		while(layer_size--){
 			layer.push_back(randint(2,10)*10);
 		}
 		layer.push_back(trainY[0].size());
-		for(int j=3;j<=7;j++) {
+		for(int j=3;j<=6;j++) {
 			double eta = 0.1*(j);
 			go(layer,eta,trainX,trainY,valX,valY);
 		}
@@ -94,8 +99,8 @@ int main(){
 	printf("X size = %lu\n",inputX[0].size());
 	printf("Y size = %lu\n",inputY[0].size());
 	for(int i=0;i<inputX.size();i++)idx.push_back(i);
+	srand(time(NULL));
 	random_shuffle(idx.begin(),idx.end());
-srand(time(NULL));
 	double vnorm = 1;
 
 	VXd valX,valY,trainX,trainY;
@@ -110,16 +115,6 @@ srand(time(NULL));
 
 	model_finder(trainX,trainY,valX,valY);
 
-
-	/* try to out put	
-	for(int i=0;i<res.siz:w
-	e();i++){
-		for(int j=0;j<res[i].size();j++){
-			printf("%lf,",res[i][j]);
-		}
-		puts("");
-	}
-	*/
 	return 0;
 
 }
