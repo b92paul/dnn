@@ -5,6 +5,7 @@
 #include <random>
 #include <algorithm>
 #include <string>
+#include <cstdlib>
 #include <cstring>
 using namespace std;
 using Eigen::MatrixXd;
@@ -47,6 +48,7 @@ vector<VectorXd> csvToVecters(char* filename, int cut=-1){
 	}
 	return res;
 }
+string itoa(int n){char buf[10];sprintf(buf,"%d",n);return buf;}
 void go(vector<int>layer,double eta,VXd& trainX, VXd& trainY, VXd& valX, VXd& valY) {
 	int input_size = trainX[0].size();
 	NetWork nn(layer,input_size);
@@ -59,8 +61,7 @@ void go(vector<int>layer,double eta,VXd& trainX, VXd& trainY, VXd& valX, VXd& va
 	char filename[100];
 	string tmp = "";
 	for(int i=0;i<layer.size()-1;i++) {
-		char buf[10];
-		tmp += itoa(buf,layer[i],10);
+		tmp += itoa(layer[i]);
 		tmp += "_";
 	}
 	sprintf(filename, "models/model_finder_%s%d.res",tmp.c_str(),(int)(eta*10));
