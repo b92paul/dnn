@@ -7,14 +7,14 @@ using namespace std;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
 char labelPath[] = "../../data/merge/label.out";
-char trainPath[] = "../../data/merge/f_train.out";
-char testPath[]  = "../../data/merge/f_test.out";
+char trainPath[] = "../../data/merge/train.out";
+char testPath[]  = "../../data/merge/test.out";
 char testId[]    = "../../data/merge/test_id.out";
 
 typedef vector<double> VD;
 typedef vector<VectorXd> VXd;
 int check = 100000;
-vector<VectorXd> csvToVecters(char* filename, int cut=300000){
+vector<VectorXd> csvToVecters(char* filename, int cut=-1){
 	int idx =0 ;
 	vector<VectorXd> res;
 	printf("%s\n",filename);
@@ -42,6 +42,7 @@ vector<VectorXd> csvToVecters(char* filename, int cut=300000){
 		tmpXd = VectorXd::Map(&tmp[0],tmp.size());
 		res.push_back(tmpXd);
 	}
+	fclose(csv);
 	return res;
 }
 
@@ -72,20 +73,20 @@ int main(){
 
 	// new network
 	vector<int> layer;
-	layer.push_back(28);
-	layer.push_back(58);
-	//layer.push_back(100);
-	//layer.push_back(20);
-	//layer.push_back(70);
+	//layer.push_back(50);
+	//layer.push_back(50);
+	layer.push_back(100);
+	layer.push_back(80);
+	//layer.push_back(60);
 	layer.push_back(inputY[0].size());
 
 	int input_size = inputX[0].size();
-	NetWork nn(layer,input_size);
+	NetWork nn(layer,input_size,true);
 	
 	//read test data
 	vector<VectorXd> testX = csvToVecters(testPath);
 	printf("data size = %lu\n",testX.size());
-	nn.SGD(trainX,trainY,0.5 ,300000,500,valX,valY,testX);
+	nn.SGD(trainX,trainY,0.4 ,300000,500,valX,valY,testX);
 
 	//nn.Predict(testX);
 	
