@@ -39,6 +39,8 @@ class NetWork
 		VectorXd *bias;
 		MatrixXd *weight;
 		double e_in, e_val;
+		VectorXd* delta_b;
+		MatrixXd* delta_w;
 		
 		NetWork(vector<int>Neuron, int _input_size):input_size(_input_size)
 		{
@@ -46,6 +48,9 @@ class NetWork
 				neuron = new int[layers];
 				bias = new VectorXd[layers];
 				weight = new MatrixXd[layers];
+				delta_b = new VectorXd[layers];
+				delta_w = new MatrixXd[layers];
+
 				srand(time(NULL));
 				for(int i=0;i<layers;i++) 
 				{
@@ -61,6 +66,8 @@ class NetWork
 			delete[] neuron;
 			delete[] bias;
 			delete[] weight;
+			delete[] delta_b;
+			delete[] delta_w;
 		}
 		VectorXd feedforward(VectorXd x)
 		{
@@ -145,9 +152,7 @@ class NetWork
 		void update(MatrixXd& BX, MatrixXd& BY,double eta){
 				double msize = (double)BX.cols();
 				
-				VectorXd* delta_b = new VectorXd[layers];
 				for(int i=0;i<layers;i++)delta_b[i] = VectorXd::Zero(neuron[i]);
-				MatrixXd* delta_w = new MatrixXd[layers];
 				
 				for(int i=0;i<layers;i++){
 					if(i==0) delta_w[i] = MatrixXd::Zero(neuron[i],input_size);
