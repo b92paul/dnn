@@ -4,6 +4,9 @@
 #include<Eigen/Dense>
 #include<iostream>
 #include<cmath>
+#include<string>
+#include<map>
+#include<time.h>
 using namespace Eigen;
 using namespace std;
 typedef vector<VectorXd> VXd;
@@ -12,7 +15,7 @@ VectorXd sigmoid(VectorXd x)
 {
 		return (VectorXd((-x).array().exp())+VectorXd::Ones(x.size())).array().inverse();
 }
-MatrixXd fast_sigmoid(MatrixXd x)
+MatrixXd fast_sigmoid(const MatrixXd& x) 
 {
 		return (MatrixXd((-x).array().exp())+MatrixXd::Ones(x.rows(),x.cols())).array().inverse();
 }
@@ -22,7 +25,7 @@ VectorXd sigmoid_prime(VectorXd x)
 		VectorXd sg = sigmoid(x);
 		return (VectorXd::Ones(x.size())-sg).cwiseProduct(sg);
 }
-MatrixXd fast_sigmoid_prime(MatrixXd x)
+MatrixXd fast_sigmoid_prime(const MatrixXd& x)
 {
 		MatrixXd sg = fast_sigmoid(x);
 		return (MatrixXd::Ones(x.rows(),x.cols())-sg).cwiseProduct(sg);
@@ -35,6 +38,7 @@ class NetWork
 		int input_size; // input x size
 		VectorXd *bias;
 		MatrixXd *weight;
+		double e_in, e_val;
 		
 		NetWork(vector<int>Neuron, int _input_size):input_size(_input_size)
 		{
@@ -53,6 +57,11 @@ class NetWork
 						weight[i] = MatrixXd::Random(neuron[i],num)/ sqrt((double)num) *3; //sigma -1 ~ 1
 				}
 		}
+		~NetWork(){
+			delete[] neuron;
+			delete[] bias;
+			delete[] weight;
+		}
 		VectorXd feedforward(VectorXd x)
 		{
 				for(int i=0;i<layers;i++) 	x=sigmoid(weight[i]*x+bias[i]);
@@ -63,7 +72,7 @@ class NetWork
 				for(int i=0;i<layers;i++) 	x=fast_sigmoid(weight[i]*x+bias[i]*(VectorXd::Ones(x.cols()).T()));
 				return x;
 		}
-		void fast_back_propgation(MatrixXd x,MatrixXd y,VectorXd *delta_b,MatrixXd *delta_w)
+		void fast_back_propagation(MatrixXd x,MatrixXd y,VectorXd *delta_b,MatrixXd *delta_w)
 		{
 				vector<MatrixXd>activation,zs;
 				activation.push_back(x);
@@ -91,33 +100,46 @@ class NetWork
 				}
 		}
 		VectorXd cost_derivative(VectorXd output,VectorXd y){return output-y;}
-		MatrixXd fast_cost_derivative(MatrixXd output,MatrixXd y){return output-y;}
-		void SGD(VXd& TrainX, VXd& TrainY, double eta, int epochs, int msize,VXd& ValX, VXd& ValY ){
+		MatrixXd fast_cost_derivative(MatrixXd& output,MatrixXd& y){return output-y;}
+
+		void SGD(VXd& TrainX, VXd& TrainY, double eta, int epochs, int msize,VXd& ValX, VXd& ValY ,VXd& testX, 
+										bool findModel = false, vector<int>* param = NULL,
+										vector<pair<double,double> >* ans = NULL){
 			int count =0 ,end=msize;
 			VXd x,y;
 			VXd judge;
 			for(int i=0; i<epochs; i++){
-				printf("-- batch %d start\n",i);
 				if(end >= TrainX.size())count=0,end=msize;
-				
+				//copy matrix
 				MatrixXd BX(TrainX[0].size(),msize);
-				MatrixXd BY(TrainY[0].size(),msize);
-				
+				MatrixXd BY(TrainY[0].size(),msize);	
 				for(int i=count;i< end; i++){
 					BX.col(i-count) << TrainX[i];
 					BY.col(i-count) << TrainY[i];	
 				}
+				count+=msize, end+=msize;
 				
-				//x = VXd(TrainX.begin()+count,TrainX.begin()+count+msize);
-				//y = VXd(TrainY.begin()+count,TrainY.begin()+count+msize);
-				count+=msize;
-				end+=msize;
-				update(BX,BY,eta);
-				if(i%100 == 0){
-					printf("e_val = %lf\n",eval(ValX,ValY));
-					printf("e_in of batch = %lf\n",fast_eval(BX,BY));
-					printf("-- batch %d done \n",i);
+				int num = 1000;
+				if(findModel){
+					num = (*param)[0];
+					if(i == (*param)[1])break;
 				}
+				
+				//update by back propagation
+				update(BX,BY,eta);
+				
+				if((i+1)%num == 0){
+					e_val = eval(ValX,ValY);
+					e_in = fast_eval(BX,BY);
+					printf("e_val = %lf\n",e_val);
+					printf("e_in of batch = %lf\n",e_in);
+					printf("-- batch %d done \n",i+1);
+					if(findModel)ans->push_back(make_pair(e_val,e_in));
+				}
+				/*
+				if((i+1)%5000 == 0){
+					Predict(testX);
+				}*/
 			}
 		}
 		void update(MatrixXd& BX, MatrixXd& BY,double eta){
@@ -132,14 +154,14 @@ class NetWork
 					else delta_w[i] = MatrixXd::Zero(neuron[i],neuron[i-1]);
 				}
 				
-				fast_back_propgation(BX,BY,delta_b,delta_w);
+				fast_back_propagation(BX,BY,delta_b,delta_w);
 				
 				for(int i=0;i<layers;i++){
 					bias[i] -= eta*delta_b[i]/msize;
 					weight[i] -= eta*delta_w[i]/msize;	
 				}
 		}
-		double eval(VXd ValBatchX,VXd ValBatchY)
+		double eval(VXd& ValBatchX,VXd& ValBatchY)
 		{
 				int num=0;
 				int binN[49]={};
@@ -157,7 +179,7 @@ class NetWork
 				}
 				return (double)num/ValBatchX.size();
 		}
-		double fast_eval(MatrixXd ValBatchX,MatrixXd ValBatchY)
+		double fast_eval(MatrixXd& ValBatchX,MatrixXd& ValBatchY)
 		{
 				int num=0;
 				for(int i=0;i<ValBatchX.cols();i++)
@@ -168,7 +190,7 @@ class NetWork
 				return (double)num/ValBatchX.cols();
 		}
 				
-		int max_number(VectorXd y)
+		int max_number(const VectorXd& y)
 		{
 				double max=-2147483647;
 				int num=-1;
@@ -181,5 +203,65 @@ class NetWork
 						}
 				}
 				return num;
+		}
+		void Predict(VXd& testX){
+			puts("--predict!!");
+			VXd testY(testX.size());	
+			for(int i=0;i<testX.size();i++){
+				if((i+1)%20000 ==0) printf("predict test:%d\n",i);
+				testY[i] = feedforward(testX[i]);
+			}
+
+			char buf[10000],buf2[10000];
+			int id;
+			
+			char lmap_path[] = "../../data/merge/lmap.out";
+			char testId[]    = "../../data/merge/test_id.out";
+			char map48_39[] = "../../data/phones/48_39.map";
+			// read lmap
+			vector<string> lmap(48);
+			FILE* f = fopen(lmap_path, "r");
+			while(~fscanf(f, "%d %s",&id,buf)){
+				lmap[id] = string(buf);
+			}
+			puts("done read lmap");
+
+			// read testId	
+			vector<string> name;
+			f = fopen(testId,"r");
+			while(~fscanf(f,"%s",buf)){
+				name.push_back(buf);
+			}
+			puts("done read testId");
+
+			// read 48 to 39
+			map<string,string> mp; 
+			f = fopen(map48_39,"r");
+			while(~fscanf(f,"%s",buf)){
+				fscanf(f,"%s",buf2);
+				mp[string(buf)] = string(buf2);
+			}
+			puts("done read 48_39map");
+			
+			//filename
+			string output_file = string("");
+			string output_dir = string("out/");
+			//timestamp
+			time_t rawtime;
+			struct tm * timeinfo;
+			time ( &rawtime );
+			timeinfo = localtime ( &rawtime );
+			//e_val e_in in filename
+			sprintf(buf, "%.4f_%.4f_",e_val,e_in);
+			output_file += buf;
+			sprintf(buf, "%s_t",asctime (timeinfo));
+			output_file += string(buf);
+			f = fopen((output_dir+output_file+".csv").c_str(),"w");
+			//output to file
+			fprintf(f,"Id,Prediction\n");
+			for(int i=0;i<testY.size();i++){
+				fprintf(f,"%s,%s\n",name[i].c_str(),mp[lmap[max_number(testY[i])]].c_str());
+			}
+			puts("--predict done!!");
 		}
 };
