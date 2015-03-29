@@ -184,8 +184,8 @@ class NetWork
 					}
 					fast_back_propagation(BX,BY,delta_b,delta_w);
 					for(int i=0;i<layers;i++){
-						bias[i] -= eta*(delta_b[i]+delta_b_old[i]*momentum)/msize;
-						weight[i] -= eta*(delta_w[i]+delta_w_old[i]*momentum)/msize;	
+						bias[i] -= (eta*delta_b[i]+delta_b_old[i]*momentum)/msize;
+						weight[i] -= (eta*delta_w[i]+delta_w_old[i]*momentum)/msize;	
 					}
 				}
 				else {
@@ -196,8 +196,8 @@ class NetWork
 					}
 					fast_back_propagation(BX,BY,delta_b_old,delta_w_old);
 					for(int i=0;i<layers;i++){
-						bias[i] -= eta*(delta_b_old[i]+delta_b[i]*momentum)/msize;
-						weight[i] -= eta*(delta_w_old[i]+delta_w[i]*momentum)/msize;	
+						bias[i] -= (eta*delta_b_old[i]+delta_b[i]*momentum)/msize;
+						weight[i] -= (eta*delta_w_old[i]+delta_w[i]*momentum)/msize;	
 					}
 				}
 		}
