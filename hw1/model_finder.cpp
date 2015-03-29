@@ -44,7 +44,46 @@ vector<VectorXd> csvToVecters(char* filename, int cut=300000){
 	}
 	return res;
 }
+#include <algorithm>
+void go(vector<int>layer,double eta,VXd& trainX, VXd& trainY, VXd& valX, VXd& valY) {
+	int input_size = trainX[0].size();
+	NetWork nn(layer,input_size);
+	vector<int>params;
+	vector<pair<double,double> > ret;
+	params.push_back(100);
+	params.push_back(2000);
+	VXd valTest;
+	nn.SGD(trainX,trainY,eta ,100000,500,valX,valY,valTest,true,&params,&ret);
+	char filename[100];
+	if(layer.size() < 3+1)layer.push_back(-1);
+	sprintf(filename, "models/model_finder_%d_%d_%d_%d.res",layer[0],layer[1],layer[2],(int)(eta*10));
+	FILE *f = fopen(filename, "w");
+	for(int i=0;i<ret.size();i++)
+		fprintf(f,"%lf %lf\n",ret[i].first,ret[i].second);
+	//e_valid, e_in
+	fclose(f);
 
+}
+int randint(int a,int b) {
+	return rand()%(b-a+1)+a;
+}
+void model_finder(VXd& trainX, VXd& trainY, VXd& valX, VXd& valY) {
+	for(int i=0;i<50;i++) {
+		vector<int>layer;
+		int a=randint(20,100);
+		int b=randint(20,100);
+		layer.push_back(a);
+		layer.push_back(b);
+		if(rand()&1) {
+			layer.push_back(randint(20,100));
+		}
+		layer.push_back(trainY[0].size());
+		for(int j=0;j<10;j++) {
+			double eta = 0.1*(j+1);
+			go(layer,eta,trainX,trainY,valX,valY);
+		}
+	}
+}
 int main(){
 	vector<int> idx;
 	vector<VectorXd> inputX = csvToVecters(trainPath);
@@ -56,7 +95,7 @@ int main(){
 	printf("Y size = %lu\n",inputY[0].size());
 	for(int i=0;i<inputX.size();i++)idx.push_back(i);
 	random_shuffle(idx.begin(),idx.end());
-
+srand(time(NULL));
 	double vnorm = 1;
 
 	VXd valX,valY,trainX,trainY;
@@ -68,36 +107,13 @@ int main(){
 		trainX.push_back(inputX[idx[i]]/vnorm);
 		trainY.push_back(inputY[idx[i]]/vnorm);
 	}
-/*
 
-	VXd valX = VXd(inputX.begin(),inputX.begin()+val_size);
-	VXd valY = VXd(inputY.begin(),inputY.begin()+val_size);
-	VXd trainX = VXd(inputX.begin()+val_size,inputX.end());
-	VXd trainY = VXd(inputY.begin()+val_size,inputY.end());
-*/
-
-	vector<int> layer;
-	layer.push_back(28);
-	layer.push_back(58);
-	//layer.push_back(100);
-	//layer.push_back(20);
-	//layer.push_back(70);
-	layer.push_back(inputY[0].size());
-
-	int input_size = inputX[0].size();
-	NetWork nn(layer,input_size);
-	nn.SGD(trainX,trainY,0.5 ,100000,500,valX,valY);
-	/*
-	vector<VectorXd> testX = csvToVecters(testPath);
-	printf("data size = %lu\n",testX.size());
-	vector<VectorXd> testY = nn.feedforward(testX);
-	char outfile[] = "test_label.out";
-	FILE *f = fopen(outfile, "w");
-	*/
+	model_finder(trainX,trainY,valX,valY);
 
 
 	/* try to out put	
-	for(int i=0;i<res.size();i++){
+	for(int i=0;i<res.siz:w
+	e();i++){
 		for(int j=0;j<res[i].size();j++){
 			printf("%lf,",res[i][j]);
 		}
