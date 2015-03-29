@@ -1,25 +1,37 @@
 from phone_mapper import Mapper
 
+import random
+
 class TrainDataProcessor:
 
-	def __init__(self, limit = -1):
+	def __init__(self, limit = -1, valid_count = 200000):
 		train_data_fbank = open('data/fbank/train.ark', 'r')
 		train_data_mfcc = open('data/mfcc/train.ark', 'r')
 		labels_48 = open('data/label/train.lab', 'r')
 		# labels_1943 = open('state_label/train.lab', 'r')
 		self.features = {}
 		self.labels = {}
-		self.cursor = 0
+		self.valid_cursor = 0
+		self.train_cursor = 0
 		self.limit = limit
 		self.record_list = []
+		self.train_data_list = []
+		self.valid_data_list = []
 		self.mapper = Mapper()
 
 		self.read_features(train_data_fbank)
 		self.read_features(train_data_mfcc)
 		self.read_labels(labels_48)
+
+		self.valid_data_list = self.record_list[:valid_count]
+		self.train_data_list = self.record_list[valid_count:]
+		random.shuffle(self.valid_data_list)
+		random.shuffle(self.train_data_list)
+
 		print "Data Loaded"
 
 	def read_features(self, file):
+		CHECK_POINT = 100000
 		count = 0
 		for line in file:
 			line = line.strip().split(' ')
@@ -31,6 +43,8 @@ class TrainDataProcessor:
 			count += 1
 			if count == self.limit:
 				break
+			if count % CHECK_POINT == 0:
+				print str(count) + ' entries loaded.'
 
 	def read_labels(self, file):
 		for line in file:
@@ -48,18 +62,30 @@ class TrainDataProcessor:
 	def get_labels(self, record_id):
 		return self.labels[record_id]
 
-	def set_cursor(self, cursor):
-		self.cursor = cursor
+	def get_train_record(self):
 
-	def get_record(self):
 		ret = None
-		if self.cursor >= len(self.record_list):
-			return None
+		if self.train_cursor >= len(self.train_data_list):
+			random.shuffle(self.train_data_list)
+			self.train_cursor = 0
 
-		record_id = self.record_list[self.cursor]
+		record_id = self.train_data_list[self.train_cursor]
 		ret = (self.get_features(record_id), self.get_labels(record_id))
-		self.cursor += 1
+		self.train_cursor += 1
 		return ret
+
+	def get_valid_record(self):
+
+		ret = None
+		if self.valid_cursor >= len(self.valid_data_list):
+			random.shuffle(self.valid_data_list)
+			self.valid_cursor = 0
+
+		record_id = self.valid_data_list[self.valid_cursor]
+		ret = (self.get_features(record_id), self.get_labels(record_id))
+		self.valid_cursor += 1
+		return ret
+
 
 class TestDataProcessor:
 	def __init__(self):

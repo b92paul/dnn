@@ -38,7 +38,7 @@ class Layer:
 		self.grad = numpy.repeat([self.in_values], self.out_count, axis=0) * numpy.repeat(numpy.transpose([self.delta]), self.in_count, axis=1)
 		
 	def get_delta_weight(self):
-		return numpy.dot(self.weight.T, self.delta)
+		return numpy.dot(numpy.transpose(self.weight), self.delta)
 
 	def set_weight(self, weight):
 		self.weight = weight
