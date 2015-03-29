@@ -58,12 +58,9 @@ class NetWork
 				}
 		}
 		~NetWork(){
-			for(int i=0;i<layers;i++){
-				delete[] neuron;
-				delete[] bias;
-				delete[] weight;
-			}
-		
+			delete[] neuron;
+			delete[] bias;
+			delete[] weight;
 		}
 		VectorXd feedforward(VectorXd x)
 		{
