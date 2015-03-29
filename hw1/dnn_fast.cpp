@@ -15,7 +15,7 @@ VectorXd sigmoid(VectorXd x)
 {
 		return (VectorXd((-x).array().exp())+VectorXd::Ones(x.size())).array().inverse();
 }
-MatrixXd fast_sigmoid(MatrixXd x)
+MatrixXd fast_sigmoid(const MatrixXd& x) 
 {
 		return (MatrixXd((-x).array().exp())+MatrixXd::Ones(x.rows(),x.cols())).array().inverse();
 }
@@ -25,7 +25,7 @@ VectorXd sigmoid_prime(VectorXd x)
 		VectorXd sg = sigmoid(x);
 		return (VectorXd::Ones(x.size())-sg).cwiseProduct(sg);
 }
-MatrixXd fast_sigmoid_prime(MatrixXd x)
+MatrixXd fast_sigmoid_prime(const MatrixXd& x)
 {
 		MatrixXd sg = fast_sigmoid(x);
 		return (MatrixXd::Ones(x.rows(),x.cols())-sg).cwiseProduct(sg);
@@ -56,6 +56,14 @@ class NetWork
 						else num=neuron[i-1];
 						weight[i] = MatrixXd::Random(neuron[i],num)/ sqrt((double)num) *3; //sigma -1 ~ 1
 				}
+		}
+		~NetWork(){
+			for(int i=0;i<layers;i++){
+				delete[] neuron;
+				delete[] bias;
+				delete[] weight;
+			}
+		
 		}
 		VectorXd feedforward(VectorXd x)
 		{
@@ -95,7 +103,8 @@ class NetWork
 				}
 		}
 		VectorXd cost_derivative(VectorXd output,VectorXd y){return output-y;}
-		MatrixXd fast_cost_derivative(MatrixXd output,MatrixXd y){return output-y;}
+		MatrixXd fast_cost_derivative(MatrixXd& output,MatrixXd& y){return output-y;}
+
 		void SGD(VXd& TrainX, VXd& TrainY, double eta, int epochs, int msize,VXd& ValX, VXd& ValY ,VXd& testX, 
 										bool findModel = false, vector<int>* param = NULL,
 										vector<pair<double,double> >* ans = NULL){
@@ -113,7 +122,7 @@ class NetWork
 				}
 				count+=msize, end+=msize;
 				
-				int num = 100;
+				int num = 1000;
 				if(findModel){
 					num = (*param)[0];
 					if(i == (*param)[1])break;
@@ -127,12 +136,13 @@ class NetWork
 					e_in = fast_eval(BX,BY);
 					printf("e_val = %lf\n",e_val);
 					printf("e_in of batch = %lf\n",e_in);
-					printf("-- batch %d done \n",i);
+					printf("-- batch %d done \n",i+1);
 					if(findModel)ans->push_back(make_pair(e_val,e_in));
 				}
+				/*
 				if((i+1)%5000 == 0){
 					Predict(testX);
-				}
+				}*/
 			}
 		}
 		void update(MatrixXd& BX, MatrixXd& BY,double eta){
@@ -154,7 +164,7 @@ class NetWork
 					weight[i] -= eta*delta_w[i]/msize;	
 				}
 		}
-		double eval(VXd ValBatchX,VXd ValBatchY)
+		double eval(VXd& ValBatchX,VXd& ValBatchY)
 		{
 				int num=0;
 				int binN[49]={};
@@ -172,7 +182,7 @@ class NetWork
 				}
 				return (double)num/ValBatchX.size();
 		}
-		double fast_eval(MatrixXd ValBatchX,MatrixXd ValBatchY)
+		double fast_eval(MatrixXd& ValBatchX,MatrixXd& ValBatchY)
 		{
 				int num=0;
 				for(int i=0;i<ValBatchX.cols();i++)
@@ -183,7 +193,7 @@ class NetWork
 				return (double)num/ValBatchX.cols();
 		}
 				
-		int max_number(VectorXd y)
+		int max_number(const VectorXd& y)
 		{
 				double max=-2147483647;
 				int num=-1;

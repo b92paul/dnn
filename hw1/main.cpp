@@ -14,7 +14,7 @@ char testId[]    = "../../data/merge/test_id.out";
 typedef vector<double> VD;
 typedef vector<VectorXd> VXd;
 int check = 100000;
-vector<VectorXd> csvToVecters(char* filename, int cut=-1){
+vector<VectorXd> csvToVecters(char* filename, int cut=300000){
 	int idx =0 ;
 	vector<VectorXd> res;
 	printf("%s\n",filename);
