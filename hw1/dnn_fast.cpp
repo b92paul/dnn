@@ -136,7 +136,7 @@ class NetWork
 					e_in = fast_eval(BX,BY);
 					printf("e_val = %lf\n",e_val);
 					printf("e_in of batch = %lf\n",e_in);
-					printf("-- batch %d done \n",i);
+					printf("-- batch %d done \n",i+1);
 					if(findModel)ans->push_back(make_pair(e_val,e_in));
 				}
 				/*
