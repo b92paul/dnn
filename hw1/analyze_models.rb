@@ -6,8 +6,10 @@ $models = []
 def file_to_obj(filename)
   ret = {}
   ret[:model] = {} 
-  ret[:model][:neuron]=filename.scan(/[0-9][[0-9]*_]+[0-9]+.res$/)[0].split('_')[0..-2].map(&:to_i)
-  ret[:model][:eta] = filename.scan(/[0-9][[0-9]*_]+[0-9]+.res$/)[0].split('_')[-1].to_f / 10.0
+  char = filename.scan(/[0-9][[0-9]*_]+[0-9]+.res$/)[0].split('_')
+  ret[:model][:neuron]=filename.scan(/\[[[0-9]+_]+\[/)[0][1..-2].split('_').map(&:to_i)
+  ret[:model][:eta] = char[-2].to_f / 10.0
+  ret[:model][:momentom] = char[-1].to_f / 10.0
   ret[:data] = {}
   ret[:data][:raw] = []
   File.open(filename,'r'){|f|
@@ -21,7 +23,7 @@ def file_to_obj(filename)
 end
 
 def print_model(e)
-  "#{e[:model][:neuron].join(',')} #{e[:model][:eta]}: #{e[:data][:max]}"
+  "#{e[:model][:neuron].join(',')} #{e[:model][:eta]} #{e[:model][:momentom]}: #{e[:data][:max]}"
 end
 
 def simple_statistics
@@ -29,7 +31,8 @@ def simple_statistics
   puts "Best eta of each:"
   $models.sort_by!{|c|-c[:data][:max]}
   $models.group_by{|c|c[:model][:neuron]}.each{|model,models|
-    puts "  Best eta of #{model}: #{models.max_by{|c|c[:data][:max]}[:model][:eta]}"
+    max = models.max_by{|c|c[:data][:max]}
+    puts "  Best eta of #{model}: eta=#{max[:model][:eta]} mom=#{max[:model][:momentom]}"
   }
 end
 

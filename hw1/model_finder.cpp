@@ -61,10 +61,10 @@ void go(vector<int>layer,double eta,double mom, VXd& trainX, VXd& trainY, VXd& v
 	char filename[100];
 	string tmp = "";
 	for(int i=0;i<layer.size()-1;i++) {
+		if(i!=0)tmp += "_";
 		tmp += itoa(layer[i]);
-		tmp += "_";
 	}
-	sprintf(filename, "models/model_finder_%s%d.res",tmp.c_str(),(int)(eta*10));
+	sprintf(filename, "models/model_finder[%s]_%d_%d.res",tmp.c_str(),(int)(eta*10),(int)(mom*10));
 	FILE *f = fopen(filename, "w");
 	for(int i=0;i<ret.size();i++)
 		fprintf(f,"%lf %lf\n",ret[i].first,ret[i].second);
