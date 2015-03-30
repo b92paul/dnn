@@ -7,7 +7,7 @@ def file_to_obj(filename)
   ret = {}
   ret[:model] = {} 
   char = filename.scan(/[0-9][[0-9]*_]+[0-9]+.res$/)[0].split('_')
-  ret[:model][:neuron]=filename.scan(/\[[[0-9]+_]+\[/)[0][1..-2].split('_').map(&:to_i)
+  ret[:model][:neuron]=filename.scan(/\[.*\]/)[0][1..-2].split('_').map(&:to_i)
   ret[:model][:eta] = char[-2].to_f / 10.0
   ret[:model][:momentom] = char[-1].to_f / 10.0
   ret[:data] = {}
