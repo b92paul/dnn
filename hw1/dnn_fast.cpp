@@ -48,6 +48,7 @@ class NetWork
 		MatrixXd *zs;
 		MatrixXd *activation;
 		bool printTest;
+		int outsize = 48;
 		NetWork(vector<int>Neuron, int _input_size,double _momentum=0,bool _printTest=false)
 						:input_size(_input_size),printTest(_printTest),momentum(_momentum)
 		{
@@ -249,16 +250,23 @@ class NetWork
 				if((i+1)%20000 ==0) printf("predict test:%d\n",i);
 				testY[i] = feedforward(testX[i]);
 			}
+			if(outsize != testY[0].size()){puts("error!!");return;}
 
 			char buf[10000],buf2[10000];
 			int id;
 			
 			char lmap_path[] = "../../data/merge/lmap.out";
+			char lmap_path_39[] = "../../data/merge/lmap_39.out";
 			char testId[]    = "../../data/merge/test_id.out";
 			char map48_39[] = "../../data/phones/48_39.map";
+
 			// read lmap
 			vector<string> lmap(48);
-			FILE* f = fopen(lmap_path, "r");
+			FILE* f;
+			if(outsize == 48) f = fopen(lmap_path, "r");
+			else if(outsize == 39) f = fopen(lmap_path_39,"r");
+			else {puts("error!!");return;}
+
 			while(~fscanf(f, "%d %s",&id,buf)){
 				lmap[id] = string(buf);
 			}
@@ -276,13 +284,17 @@ class NetWork
 
 			// read 48 to 39
 			map<string,string> mp; 
-			f = fopen(map48_39,"r");
-			while(~fscanf(f,"%s %s",buf,buf2)){
-				mp[string(buf)] = string(buf2);
-			}
-			fclose(f);
-			puts("done read 48_39map");
+			if(outsize == 48){
+
+				f = fopen(map48_39,"r");
+				while(~fscanf(f,"%s %s",buf,buf2)){
+					mp[string(buf)] = string(buf2);
+				}
+				fclose(f);
+				puts("done read 48_39map");
 			
+			}
+
 			//filename
 			string output_file = string("");
 			string output_dir = string("out/");
@@ -300,7 +312,11 @@ class NetWork
 			//output to file
 			fprintf(f,"Id,Prediction\n");
 			for(int i=0;i<testY.size();i++){
-				fprintf(f,"%s,%s\n",name[i].c_str(),mp[lmap[max_number(testY[i])]].c_str());
+				if(outsize == 48)
+					fprintf(f,"%s,%s\n",name[i].c_str(),mp[lmap[max_number(testY[i])]].c_str());
+				else if(outsize == 39)
+					fprintf(f,"%s,%s\n",name[i].c_str(),lmap[max_number(testY[i])].c_str());
+				else {puts("error!!");fclose(f);return;}
 			}
 			fclose(f);
 			puts("--predict done!!");
