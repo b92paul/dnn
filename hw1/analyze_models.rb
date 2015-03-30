@@ -1,6 +1,6 @@
 #!/usr/bin/ruby
 
-
+$dir = 'models'
 $models = []
 
 def file_to_obj(filename)
@@ -27,6 +27,7 @@ end
 def simple_statistics
   puts "Best rate of all: #{print_model($models.max_by{|c| c[:data][:max]})}"
   puts "Best eta of each:"
+  $models.sort_by!{|c|-c[:data][:max]}
   $models.group_by{|c|c[:model][:neuron]}.each{|model,models|
     puts "  Best eta of #{model}: #{models.max_by{|c|c[:data][:max]}[:model][:eta]}"
   }
@@ -36,13 +37,6 @@ def output_csv
 #  puts '"neuron","eta",' + (1..20).to_a.map{|c|c*1000}.join(',')
   $models.sort_by{|c|c[:model][:neuron].to_s+c[:model][:eta].to_s}.each{|f|
     puts "\"#{f[:model][:neuron]}\",\"#{f[:model][:eta]}\"," + f[:data][:raw].join(',')
-  }
-end
-
-def load_files
-  Dir.chdir('models')
-  Dir.glob("*.res").each{|filename|
-    $models << file_to_obj(filename)
   }
 end
 
@@ -61,6 +55,14 @@ usage: ./analyze_models.rb command
 HELP
   exit
 end
+
+def load_files
+  Dir.chdir($dir)
+  Dir.glob("*.res").each{|filename|
+    $models << file_to_obj(filename)
+  }
+end
+
 
 def main
   help if ARGV.size != 1
