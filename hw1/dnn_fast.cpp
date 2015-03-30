@@ -3,6 +3,7 @@
 #include<vector>
 #include<Eigen/Dense>
 #include<iostream>
+#include<fstream>
 #include<cmath>
 #include<string>
 #include<map>
@@ -168,12 +169,17 @@ class NetWork
 				}
 				count+=msize, end+=msize;
 				if(printTest && (i+1)%5000 == 0){
+					char model_name[]="model.QAQ";
+					save_model(model_name);
 					Predict(testX);
 				}
 			}
 		}
 		void update(Block<MatrixXd> BX, Block<MatrixXd> BY,double eta,int time){
 				double msize = (double)BX.cols();
+				if(e_val>=0.55) eta/=8;
+				else if(e_val>=0.53) eta/=4;
+				else if(e_val>=0.5) eta/=2;
 				if(time%2==0)
 				{
 					for(int i=0;i<layers;i++){
@@ -320,5 +326,70 @@ class NetWork
 			}
 			fclose(f);
 			puts("--predict done!!");
+		}
+		bool save_model(char file_name[])
+		{
+				char total_file_name[100] ="saved_models/";
+				fstream file;
+				strcat(total_file_name,file_name);
+				file.open(total_file_name,ios::out);
+				if(file.fail()) return false;
+				file<<input_size<<endl;
+				file<<layers<<endl;
+				for(int i=0;i<layers;i++) 
+				{
+					file<<neuron[i];
+					if(i!=layers-1) file<<" ";
+					else file<<endl;
+				}
+				for(int i=0;i<layers;i++) file<<bias[i]<<endl<<weight[i]<<endl;
+				file.close();
+				return true;
+		}
+		bool read_model(char file_name[])
+		{
+				char total_file_name[100] ="saved_models/";
+				fstream file;
+				strcat(total_file_name,file_name);
+				file.open(total_file_name,ios::in);
+				if(file.fail()) return false;
+				file>>input_size;
+				file>>layers;
+				delete [] neuron,bias,weight,delta_b,delta_w,delta_b_old,delta_w_old,zs,activation;
+				neuron = new int[layers];
+				bias = new VectorXd[layers];
+				weight = new MatrixXd[layers];
+				delta_b = new VectorXd[layers];
+				delta_w = new MatrixXd[layers];
+				activation = new MatrixXd[layers+1];
+				zs = new MatrixXd[layers];
+				delta_b_old = new VectorXd[layers];
+				delta_w_old = new MatrixXd[layers];
+				for(int i=0;i<layers;i++) file>>neuron[i];
+				for(int i=0;i<layers;i++) 
+				{
+						delta_b_old[i] = VectorXd::Zero(neuron[i]);
+						if(i==0) delta_w_old[i] = MatrixXd::Zero(neuron[i],input_size);
+						else delta_w_old[i] = MatrixXd::Zero(neuron[i],neuron[i-1]);
+				}
+				for(int i=0;i<layers;i++) 
+				{
+						bias[i] = VectorXd::Zero(neuron[i]);
+						int num;
+						if(i==0) num=input_size;
+						else num=neuron[i-1];
+						weight[i] = MatrixXd::Zero(neuron[i],num);
+				}
+				for(int i=0;i<layers;i++)
+				{	
+						for(int j=0;j<neuron[i];j++) file>>bias[i](j);
+						int num=input_size;
+						if(i!=0) num=neuron[i-1];
+						for(int j=0;j<num;j++)
+							for(int k=0;k<neuron[i];k++)
+									file>>weight[i](k,j);
+				}
+				file.close();
+				return true;
 		}
 };
