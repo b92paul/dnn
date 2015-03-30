@@ -138,13 +138,6 @@ class NetWork
 			clock_t start_time = clock();
 			for(int i=0; i<epochs; i++){
 				if(end > TrainX.size())count=0,end=msize;
-				/*copy matrix
-				MatrixXd BX(TrainX[0].size(),msize);
-				MatrixXd BY(TrainY[0].size(),msize);	
-				for(int i=count;i< end; i++){
-					BX.col(i-count) << TrainX[i];
-					BY.col(i-count) << TrainY[i];	
-				}*/
 				
 				int num = 1000;
 				if(findModel){
@@ -159,11 +152,16 @@ class NetWork
 				if((i+1)%num == 0){
 					e_val = eval(ValX,ValY);
 					e_in = fast_eval(BX.block(0,count,TrainX[0].size(),msize),BY.block(0,count,TrainY[0].size(),msize));
+					// print exp message
 					printf("%s-- Spend %f time to train %d batch.\n",
 													color,((float)(clock()-start_time))/CLOCKS_PER_SEC,num);
+					printf("Layer number = %d; ",layers);
+					for(int i=0;i<layers;i++)printf("%d%c",neuron[i],i==(layers-1)?'\n':',');
+					printf("learning rate = %.3f, momentum = %.3f\n",eta,momentum);
 					printf("e_val = %lf\n",e_val);
 					printf("e_in of batch = %lf\n",e_in);
 					printf("-- batch %d done.%s\n",i+1,NC);
+					//return parameter for model finder
 					if(findModel)ans->push_back(make_pair(e_val,e_in));
 					start_time = clock();	
 				}
