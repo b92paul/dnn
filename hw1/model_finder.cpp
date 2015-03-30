@@ -49,9 +49,9 @@ vector<VectorXd> csvToVecters(char* filename, int cut=-1){
 	return res;
 }
 string itoa(int n){char buf[10];sprintf(buf,"%d",n);return buf;}
-void go(vector<int>layer,double eta,VXd& trainX, VXd& trainY, VXd& valX, VXd& valY) {
+void go(vector<int>layer,double eta,double mom, VXd& trainX, VXd& trainY, VXd& valX, VXd& valY) {
 	int input_size = trainX[0].size();
-	NetWork nn(layer,input_size);
+	NetWork nn(layer,input_size,mom);
 	vector<int>params;
 	vector<pair<double,double> > ret;
 	params.push_back(1000);
@@ -80,13 +80,15 @@ void model_finder(VXd& trainX, VXd& trainY, VXd& valX, VXd& valY) {
 		vector<int>layer;
 		int layer_size = rand()%3+2; // 2~4
 		while(layer_size--){
-			layer.push_back(randint(2,10)*10);
+			layer.push_back(randint(5,15)*10);
 		}
 		layer.push_back(trainY[0].size());
-		for(int j=3;j<=6;j++) {
-			double eta = 0.1*(j);
-			go(layer,eta,trainX,trainY,valX,valY);
-		}
+		for(int k=0;k<4;k++)
+			for(int j=3;j<=6;j++) {
+				double mom = 0.1*k;
+				double eta = 0.1*(j);
+				go(layer,eta,mom,trainX,trainY,valX,valY);
+			}
 	}
 }
 int main(){
