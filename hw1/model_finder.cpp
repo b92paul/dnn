@@ -78,13 +78,13 @@ int randint(int a,int b) {
 void model_finder(VXd& trainX, VXd& trainY, VXd& valX, VXd& valY) {
 	for(int i=0;i<50;i++) {
 		vector<int>layer;
-		int layer_size = rand()%3+2; // 2~4
+		int layer_size = randint(3,4);
 		while(layer_size--){
 			layer.push_back(randint(5,15)*10);
 		}
 		layer.push_back(trainY[0].size());
-		for(int k=0;k<4;k++)
-			for(int j=3;j<=6;j++) {
+		for(int k=2;k<=8;k+=2)
+			for(int j=1;j<=5;j++) {
 				double mom = 0.1*k;
 				double eta = 0.1*(j);
 				go(layer,eta,mom,trainX,trainY,valX,valY);
