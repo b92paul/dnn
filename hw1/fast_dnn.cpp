@@ -153,7 +153,7 @@ class NetWork
 		MatrixXd fast_cost_derivative(MatrixXd& output,const MatrixXd& y){return output-y;}
 		void cost_derivative(const MatrixXd& a,const MatrixXd& y,MatrixXd& output){output=a-y;return;}
 
-		void SGD(MatrixXd& BX, MatrixXd& BY, double eta, int epochs, int msize,VXd& ValX, VXd& ValY ,VXd& testX, 
+		void SGD(MatrixXd& BX, MatrixXd& BY, double eta, int epochs, int msize,MatrixXd& ValX, MatrixXd& ValY ,MatrixXd& testX, 
 										bool findModel = false, vector<int>* param = NULL,
 										vector<pair<double,double> >* ans = NULL){
 			int count =0 ,end=msize;
@@ -219,22 +219,22 @@ class NetWork
 					}
 				}
 		}
-		double eval(VXd& ValBatchX,VXd& ValBatchY)
+		double eval(MatrixXd& ValBatchX,MatrixXd& ValBatchY)
 		{
 				int num=0;
 				int binN[49]={}, binY[49]={};
-				for(int i=0;i<ValBatchX.size();i++)
+				for(int i=0;i<ValBatchX.cols();i++)
 				{
-						VectorXd output = feedforward(ValBatchX[i]);
+						VectorXd output = feedforward(ValBatchX.col(i));
 						int now = max_number(output);
 						binN[now]++;
-						if(now == max_number(ValBatchY[i])) num++,binY[now]++;
+						if(now == max_number(ValBatchY.col(i))) num++,binY[now]++;
 				}
 				for(int i=0;i<49;i++){
 					printf("Idx=%2d:%4d in %5d| ",i, binY[i], binN[i]);
 					if((i+1) % 7 == 0)puts("");
 				}
-				return (double)num/ValBatchX.size();
+				return (double)num/double(ValBatchX.cols());
 		}
 		double fast_eval(Block<MatrixXd> ValBatchX,Block<MatrixXd> ValBatchY)
 		{
@@ -253,12 +253,12 @@ class NetWork
 				y.maxCoeff(&maxIndex);
 				return int(maxIndex);
 		}
-		void Predict(VXd& testX){
+		void Predict(MatrixXd& testX){
 			puts("--predict!!");
-			VXd testY(testX.size());	
-			for(int i=0;i<testX.size();i++){
+			VXd testY(testX.cols());	
+			for(int i=0;i<testX.cols();i++){
 				if((i+1)%20000 ==0) printf("predict test:%d\n",i);
-				testY[i] = feedforward(testX[i]);
+				testY[i] = feedforward(testX.col(i));
 			}
 			if(outsize != testY[0].size()){puts("error!!");return;}
 
