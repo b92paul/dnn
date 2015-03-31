@@ -15,22 +15,45 @@ typedef vector<VectorXd> VXd;
 #define T() transpose()
 VectorXd sigmoid(VectorXd x)
 {
-		return (VectorXd((-x).array().exp())+VectorXd::Ones(x.size())).array().inverse();
+		return (((-x).array().exp())+1).array().inverse();
 }
 MatrixXd fast_sigmoid(const MatrixXd& x) 
 {
-		return (MatrixXd((-x).array().exp())+MatrixXd::Ones(x.rows(),x.cols())).array().inverse();
+
+		return (((-x).array().exp())+1).array().inverse();
+}
+
+
+void logistic(const Eigen::MatrixXd& a, Eigen::MatrixXd& z)
+{
+	double const* aPtr = a.data();
+	double const* aEnd = aPtr + a.rows() * a.cols();
+	for(double* zPtr = z.data(); aPtr < aEnd; aPtr++, zPtr++)
+	{
+		if(*aPtr < -45.0)
+			*zPtr = 0.0;
+		else if(*aPtr > 45.0)
+			*zPtr = 1.0;
+		else
+			*zPtr = 1.0 / (1.0 + std::exp(-*aPtr));
+	}
+}
+
+void logistic_prime(const MatrixXd& x, MatrixXd& out)
+{
+		logistic_prime(x,out);
+		out = (out.array()*(out.array()+1)).matrix();
 }
 
 VectorXd sigmoid_prime(VectorXd x)
 {
 		VectorXd sg = sigmoid(x);
-		return (VectorXd::Ones(x.size())-sg).cwiseProduct(sg);
+		return (sg.array()*(1-sg.array())).matrix();
 }
 MatrixXd fast_sigmoid_prime(const MatrixXd& x)
 {
 		MatrixXd sg = fast_sigmoid(x);
-		return (MatrixXd::Ones(x.rows(),x.cols())-sg).cwiseProduct(sg);
+		return (sg.array()*(1-sg.array())).matrix();
 }
 class NetWork
 {
@@ -104,7 +127,7 @@ class NetWork
 				for(int i=0;i<layers;i++) 
 				{
 						zs[i]=weight[i]*activation[i]+bias[i]* (VectorXd::Ones(x.cols()).T()) ;
-						activation[i+1]=fast_sigmoid(zs[i]);
+						logistic(zs[i], activation[i+1]);
 				}
 				MatrixXd d= fast_cost_derivative(activation[layers],y);//.cwiseProduct(fast_sigmoid_prime(zs[layers-1]));
 				delta_b[layers-1] += d.rowwise().sum();
@@ -135,10 +158,14 @@ class NetWork
 					BX.col(i)<<TrainX[i];
 					BY.col(i)<<TrainY[i];
 			}
+			for(int l=1;l<= layers;l++){
+				activation[l] = MatrixXd(neuron[l-1],msize);
+			}
 			VXd x,y;
 			VXd judge;
 			clock_t start_time = clock();
 			for(int i=0; i<epochs; i++){
+				printf("batch %d\n",i);
 				if(end > TrainX.size())count=0,end=msize;
 				
 				int num = 1000;
