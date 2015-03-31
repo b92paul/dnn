@@ -389,8 +389,8 @@ class NetWork
 						for(int j=0;j<neuron[i];j++) file>>bias[i](j);
 						int num=input_size;
 						if(i!=0) num=neuron[i-1];
-						for(int j=0;j<num;j++)
-							for(int k=0;k<neuron[i];k++)
+						for(int k=0;k<neuron[i];k++)
+							for(int j=0;j<num;j++)
 									file>>weight[i](k,j);
 				}
 				file.close();
