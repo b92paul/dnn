@@ -153,9 +153,10 @@ class NetWork
 		MatrixXd fast_cost_derivative(MatrixXd& output,const MatrixXd& y){return output-y;}
 		void cost_derivative(const MatrixXd& a,const MatrixXd& y,MatrixXd& output){output=a-y;return;}
 
-		void SGD(MatrixXd& BX, MatrixXd& BY, double eta, int epochs, int msize,MatrixXd& ValX, MatrixXd& ValY ,MatrixXd& testX, 
-										bool findModel = false, vector<int>* param = NULL,
-										vector<pair<double,double> >* ans = NULL){
+		void SGD(MatrixXd& BX, MatrixXd& BY, double eta, int epochs, int msize, bool decay, double T, 
+				MatrixXd& ValX, MatrixXd& ValY ,MatrixXd& testX, 
+				bool findModel = false, vector<int>* param = NULL, // for model_finder
+				vector<pair<double,double> >* ans = NULL){
 			int count =0 ,end=msize;
 			puts("-- Start SGD.");
 			for(int l=1;l<= layers;l++){
@@ -172,7 +173,7 @@ class NetWork
 					if(i == (*param)[1])break;
 				}
 				//update by back propagation
-				update(BX.block(0,count,BX.rows(),msize),BY.block(0,count,BY.rows(),msize),eta,i);
+				update(BX.block(0,count,BX.rows(),msize),BY.block(0,count,BY.rows(),msize),eta,i, T, decay);
 				
 				if((i+1)%num == 0){
 					e_val = eval(ValX,ValY);
@@ -182,7 +183,8 @@ class NetWork
 													color,((float)(clock()-start_time))/CLOCKS_PER_SEC,num);
 					printf("Layer number = %d; ",layers);
 					for(int i=0;i<layers;i++)printf("%d%c",neuron[i],i==(layers-1)?'\n':',');
-					printf("learning rate = %.3f, momentum = %.3f\n",eta,momentum);
+					printf("learning rate = %.3f, momentum = %.3f\n",eta, momentum);
+					printf("learning rate now = %.3f\n",(decay)?(eta/(i/T + 1)):eta);
 					printf("e_val = %lf\n",e_val);
 					printf("e_in of batch = %lf\n",e_in);
 					printf("-- batch %d done.%s\n",i+1,NC);
@@ -198,11 +200,14 @@ class NetWork
 				}
 			}
 		}
-		void update(Block<MatrixXd> BX, Block<MatrixXd> BY,double eta,int time){
+		void update(Block<MatrixXd> BX, Block<MatrixXd> BY,double eta,int time, double T, bool decay){
 				double msize = (double)BX.cols();
+				/*
 				if(e_val>=0.55) eta/=8;
 				else if(e_val>=0.53) eta/=4;
 				else if(e_val>=0.5) eta/=2;
+				*/
+				if(decay) eta = eta /(time/T +1);
 				if(time%2==0)
 				{
 					fast_back_propagation(BX,BY,delta_b,delta_w);

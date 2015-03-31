@@ -12,14 +12,15 @@ char testPath[]  = "../../data/merge/test.out";
 char testId[]    = "../../data/merge/test_id.out";
 #define INPUT_SIZE 108
 #define OUTPUT_SIZE 39 
-#define TRAIN_READ 1124823 // Max is 1124823
+#define TRAIN_READ 112482 // Max is 1124823
 #define TEST_READ 180406 // Max is 180406
 #define MOM 0.9
 #define ETA 0.4
-#define BATCH_NUM 50000000
+#define BATCH_NUM 50000000 // 1 epoch about 1e6 data
 #define BATCH_SIZE 500
 #define VAL_SIZE 10000
-
+#define TIME_DECAY true
+#define TIME_DECAY_NUM 30000.0
 mt19937 rng(0x5EED);
 int randint(int lb, int ub) {
 		return uniform_int_distribution<int>(lb, ub)(rng);
@@ -64,7 +65,6 @@ void shuffleMatrix(MatrixXd& X,MatrixXd& Y, MatrixXd& vX, MatrixXd& vY, int val_
 		vX = MatrixXd( INPUT_SIZE, val_size);
 		vY = MatrixXd(OUTPUT_SIZE, val_size);
 	}
-	MatrixXd tmpX, tmpY;
 	for(int i = n-1; i >= 0; i--){
 		int idx = randint(0,i);
 		X.col(i).swap(X.col(idx));
@@ -94,11 +94,11 @@ int main(){
 
 	// new network
 	vector<int> layer;
-	layer.push_back(128);
-	//layer.push_back(100);
-	//layer.push_back(100);
-	//layer.push_back(100);
-	//layer.push_back(100);
+	layer.push_back(200);
+	layer.push_back(150);
+	layer.push_back(150);
+	layer.push_back(150);
+	layer.push_back(150);
 	layer.push_back(OUTPUT_SIZE);	
 	NetWork nn(layer, INPUT_SIZE, MOM, true);
 	nn.outsize = OUTPUT_SIZE;
@@ -107,7 +107,7 @@ int main(){
 	MatrixXd testX;
 	csvToMatrix(testPath, testX, INPUT_SIZE, TEST_READ);
 	printf("test data size = %lu\n",testX.cols());
-	nn.SGD(inputX, inputY, ETA, BATCH_NUM, BATCH_SIZE, valX, valY, testX);
+	nn.SGD(inputX, inputY, ETA, BATCH_NUM, BATCH_SIZE, TIME_DECAY, TIME_DECAY_NUM, valX, valY, testX);
 
 	//nn.Predict(testX);
 	
