@@ -12,7 +12,7 @@ char testPath[]  = "../../data/merge/test.out";
 char testId[]    = "../../data/merge/test_id.out";
 #define INPUT_SIZE 108
 #define OUTPUT_SIZE 39 
-#define TRAIN_READ 112482 // Max is 1124823
+#define TRAIN_READ 1124823 // Max is 1124823
 #define TEST_READ 180406 // Max is 180406
 #define MOM 0.9
 #define ETA 0.4
