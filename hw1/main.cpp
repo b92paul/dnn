@@ -14,7 +14,7 @@ char testId[]    = "../../data/merge/test_id.out";
 typedef vector<double> VD;
 typedef vector<VectorXd> VXd;
 int check = 100000;
-vector<VectorXd> csvToVecters(char* filename, int cut= -1){
+vector<VectorXd> csvToVecters(char* filename, int cut= 100000){
 	int idx =0 ;
 	vector<VectorXd> res;
 	printf("%s\n",filename);
@@ -78,10 +78,10 @@ int main(){
 	// new network
 	vector<int> layer;
 	layer.push_back(80);
-	layer.push_back(50);
-	layer.push_back(50);
-	layer.push_back(50);
-	layer.push_back(50);
+	layer.push_back(100);
+	layer.push_back(100);
+	layer.push_back(100);
+	layer.push_back(100);
 	layer.push_back(inputY[0].size());
 
 	int input_size = inputX[0].size();

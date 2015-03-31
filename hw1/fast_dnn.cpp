@@ -23,7 +23,10 @@ MatrixXd fast_sigmoid(const MatrixXd& x)
 		return (((-x).array().exp())+1).array().inverse();
 }
 
-
+void flogistic(const MatrixXd& z, MatrixXd& a){
+	a = (((-z).array().exp())+1).array().inverse();
+	return;
+}
 void logistic(const Eigen::MatrixXd& a, Eigen::MatrixXd& z)
 {
 	double const* aPtr = a.data();
@@ -45,8 +48,9 @@ void logistic_prime(const MatrixXd& x, MatrixXd& out)
 		out = (out.array()*(out.array()+1)).matrix();
 }
 
-MatrixXd s2p(const MatrixXd& x){
-	return (x.array()*(1-x.array())).matrix();
+void s2p(const MatrixXd& x, MatrixXd& out){
+	out = (x.array()*(1-x.array()));
+	return;
 }
 MatrixXd fast_sigmoid_prime(const MatrixXd& x)
 {
@@ -111,41 +115,43 @@ class NetWork
 		}
 		VectorXd feedforward(VectorXd x)
 		{
-				for(int i=0;i<layers;i++) 	x=sigmoid(weight[i]*x+bias[i]);
+				for(int i=0;i<layers;i++) x = sigmoid(weight[i]*x+bias[i]);
 				return x;
 		}
 		MatrixXd fast_feedforward(MatrixXd x)
 		{
-				for(int i=0;i<layers;i++) 	x=fast_sigmoid(weight[i]*x+bias[i]*(VectorXd::Ones(x.cols()).T()));
+				for(int i=0;i<layers;i++) 	flogistic(weight[i]*x+bias[i]*(VectorXd::Ones(x.cols()).T()),x);
 				return x;
 		}
 		void fast_back_propagation(const MatrixXd& x,const MatrixXd& y,VectorXd *delta_b,MatrixXd *delta_w)
 		{
+				clock_t start_time2 = clock();
 				activation[0]=x;
-				for(int i=0;i<layers;i++) 
-				{
+				clock_t start_time3 = clock();
+				
+				for(int i=0;i<layers;i++) {
 						zs[i]=weight[i]*activation[i]+bias[i]* (VectorXd::Ones(x.cols()).T()) ;
-						logistic(zs[i], activation[i+1]);
+						flogistic(zs[i], activation[i+1]);
 				}
+				//printf("3 Spend %f time.\n",((float)(clock()-start_time3))/CLOCKS_PER_SEC);
 				MatrixXd &d = delta[layers-1];
 				cost_derivative(activation[layers],y,d);//.cwiseProduct(fast_sigmoid_prime(zs[layers-1]));
 				
-				delta_b[layers-1] += d.rowwise().sum();
+				delta_b[layers-1] = d.rowwise().sum();
 				for(int i=0;i<d.cols();i++){
-					delta_w[layers-1] += (d.col(i) * activation[layers-1].col(i).T());
+					delta_w[layers-1] = (d.col(i) * activation[layers-1].col(i).T());
 				}
-				for(int l=2;l<=layers;l++)
-				{
+				for(int l=2;l<=layers;l++) {
 						MatrixXd& d = delta[layers-l];
-						d= s2p(activation[layers-l+1]);
-
+						s2p(activation[layers-l+1], d);
 						d = (weight[layers-l+1].T()*delta[layers-l+1]).cwiseProduct(d); 
-						delta_b[layers-l] += d.rowwise().sum();
-						for(int i=0;i<d.cols();i++){
-							delta_w[layers-l] += (d.col(i) * activation[layers-l].col(i).T());
-						}
-						//delta_w[layers-l] += d*(activation[layers-l].rowwise().sum().T());
+						delta_b[layers-l] = d.rowwise().sum();
+						clock_t start_time = clock();
+						delta_w[layers-l] = (d * activation[layers-l].T());
+						//printf("Spend %f time.\n",((float)(clock()-start_time))/CLOCKS_PER_SEC);
+						
 				}
+				//printf("ALL Spend %f time.\n",((float)(clock()-start_time2))/CLOCKS_PER_SEC);
 		}
 
 		MatrixXd fast_cost_derivative(MatrixXd& output,const MatrixXd& y){return output-y;}
@@ -160,8 +166,6 @@ class NetWork
 				activation[l] = MatrixXd(neuron[l-1],msize);
 				delta[l-1] = MatrixXd(neuron[l-1],msize);
 			}
-			VXd x,y;
-			VXd judge;
 			clock_t start_time = clock();
 			for(int i=0; i<epochs; i++){
 				if(end > BX.cols())count=0,end=msize;
@@ -210,7 +214,6 @@ class NetWork
 				if(time%2==0)
 				{
 					for(int i=0;i<layers;i++){
-						delta_b[i] = VectorXd::Zero(neuron[i]);
 						if(i==0) delta_w[i] = MatrixXd::Zero(neuron[i],input_size);
 						else delta_w[i] = MatrixXd::Zero(neuron[i],neuron[i-1]);
 					}
@@ -222,7 +225,6 @@ class NetWork
 				}
 				else {
 					for(int i=0;i<layers;i++){
-						delta_b_old[i] = VectorXd::Zero(neuron[i]);
 						if(i==0) delta_w_old[i] = MatrixXd::Zero(neuron[i],input_size);
 						else delta_w_old[i] = MatrixXd::Zero(neuron[i],neuron[i-1]);
 					}
@@ -236,8 +238,7 @@ class NetWork
 		double eval(VXd& ValBatchX,VXd& ValBatchY)
 		{
 				int num=0;
-				int binN[49]={};
-				int binY[49]={};
+				int binN[49]={}, binY[49]={};
 				for(int i=0;i<ValBatchX.size();i++)
 				{
 						VectorXd output = feedforward(ValBatchX[i]);
@@ -264,17 +265,9 @@ class NetWork
 				
 		int max_number(const VectorXd& y)
 		{
-				double max=-2147483647;
-				int num=-1;
-				for(int i=0;i<y.size();i++)
-				{
-						if(y(i)>= max)
-						{
-								max=y(i);
-								num=i;
-						}
-				}
-				return num;
+				VectorXd::Index maxIndex;
+				y.maxCoeff(&maxIndex);
+				return int(maxIndex);
 		}
 		void Predict(VXd& testX){
 			puts("--predict!!");
