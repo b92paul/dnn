@@ -9,6 +9,7 @@
 #include<map>
 #include<time.h>
 #include<ctime>
+#include<sys/time.h>
 using namespace Eigen;
 using namespace std;
 typedef vector<VectorXd> VXd;
@@ -132,7 +133,7 @@ class NetWork
 				activation[0]=x;
 				for(int i=0;i<layers;i++) {
 						zs[i]=weight[i]*activation[i]+bias[i]* (VectorXd::Ones(x.cols()).T()) ;
-						logistic(zs[i], activation[i+1]);
+						flogistic(zs[i], activation[i+1]);
 				}
 				
 				//cost function
@@ -164,6 +165,9 @@ class NetWork
 				delta[l-1] = MatrixXd(neuron[l-1],msize);
 			}
 			clock_t start_time = clock();
+			struct timeval tstart, tend;
+			gettimeofday(&tstart, NULL);
+			
 			for(int i=0; i<epochs; i++){
 				if(end > BX.cols())count=0,end=msize;
 				
@@ -179,8 +183,9 @@ class NetWork
 					e_val = eval(ValX,ValY);
 					e_in = fast_eval(BX.block(0,count,BX.rows() ,msize),BY.block(0,count,BY.rows(),msize));
 					// print exp message
-					printf("%s-- Spend %f time to train %d batch.\n",
-													color,((float)(clock()-start_time))/CLOCKS_PER_SEC,num);
+					gettimeofday(&tend, NULL);
+					double time_delta = ((tend.tv_sec  - tstart.tv_sec) * 1000000u + tend.tv_usec - tstart.tv_usec) / 1.e6;
+					printf("%s-- Spend %f time to train %d batch.\n",color,(time_delta),num);
 					printf("Layer number = %d; ",layers);
 					for(int i=0;i<layers;i++)printf("%d%c",neuron[i],i==(layers-1)?'\n':',');
 					printf("learning rate = %.3f, momentum = %.3f\n",eta, momentum);
@@ -191,6 +196,7 @@ class NetWork
 					//return parameter for model finder
 					if(findModel)ans->push_back(make_pair(e_val,e_in));
 					start_time = clock();	
+					gettimeofday(&tstart, NULL);
 				}
 				count+=msize, end+=msize;
 				if(printTest && (i+1)%5000 == 0){
