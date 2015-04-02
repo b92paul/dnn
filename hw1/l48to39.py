@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import numpy as np
 train_label_path = "../../data/merge/label.out"
 test_label_path = "../../data/merge/test.out"
@@ -5,7 +6,7 @@ mp_48_39_path = "../../data/phones/48_39.map"
 mp_id_48_path = "../../data/merge/lmap.out"
 mp_id_39_path = "../../data/merge/lmap_39.out"
 
-train_label_39_path = "../../data/merge/labal_39.out"
+train_label_39_path = "../../data/merge/label_39.out"
 test_label_39_path = "../../data/merge/test_39.out"
 
 def gen39file(filename,outfile):
@@ -21,25 +22,37 @@ def gen39file(filename,outfile):
             m39_id[tmp[1]] = len(m39_id)
     for line in f2:
         tmp = line.strip().split(' ')
-        print tmp
         mid_48[tmp[0]] = tmp[1]
-    print mid_48
-    print m48_39
-    print m39_id
     lb = []
+
+    f5 = open(mp_id_39_path,"w")
+    for idx in m39_id:
+        print idx
+        f5.write(str(m39_id[idx])+" "+idx+"\n")
+    f5.close()
+
     f3 = open(filename,"r")
     f4 = open(outfile,"w")
-    for line in f3:
+
+    # read 48 [0,.,1] array map to 39 [0,0,..1] array
+    for now,line in enumerate(f3):
+        if now % 10000 ==0:
+            print "at ",now," OAO"
         tmp = line.strip().split(',')
         tmp = np.array(tmp,dtype=float)
-        for i in xrange(len(tmp)):
-            idx = np.zeros(39,dtype=float)
-            if tmp[i] > 0:
-                oo = m39_id[m48_39[mid_48[str(i)]]]
-                idx[oo] = 1
-            lb.append(idx)
-    np.savetxt(out_file, np.array(lb), delimiter=",", fmt='%.1f')
-
+        idx = np.zeros(39,dtype=float)
+        i = np.argmax(tmp)
+        if tmp[i] > 0:
+            oo = m39_id[m48_39[mid_48[str(i)]]]
+            idx[oo] = 1
+        lb.append(idx)
+    f3.close()
+    print "Write to out_file ~!"
     
+    # outfile 39 array to outfile
+    np.savetxt(f4, np.array(lb), delimiter=",", fmt='%.1f')
+    f4.close()
+
+        
 gen39file(train_label_path, train_label_39_path)
 
