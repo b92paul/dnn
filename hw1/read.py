@@ -67,7 +67,7 @@ def merge_train(fbank, mfcc, ilm, lim):
 def merge_test(fbank, mfcc):
     tm = []
     ti = open(test_id,'w')
-    for id in data_fbank:
+    for id in fbank:
         tm.append(np.concatenate( (fbank[id], mfcc[id])) )
         ti.write(id+'\n')
     np.savetxt(test_merge, tm, delimiter=",", fmt='%.8f')
