@@ -49,9 +49,9 @@ vector<VectorXd> csvToVecters(char* filename, int cut=-1){
 	return res;
 }
 string itoa(int n){char buf[10];sprintf(buf,"%d",n);return buf;}
-void go(vector<int>layer,double eta,VXd& trainX, VXd& trainY, VXd& valX, VXd& valY) {
+void go(vector<int>layer,double eta,double mom, VXd& trainX, VXd& trainY, VXd& valX, VXd& valY) {
 	int input_size = trainX[0].size();
-	NetWork nn(layer,input_size);
+	NetWork nn(layer,input_size,mom);
 	vector<int>params;
 	vector<pair<double,double> > ret;
 	params.push_back(1000);
@@ -61,10 +61,10 @@ void go(vector<int>layer,double eta,VXd& trainX, VXd& trainY, VXd& valX, VXd& va
 	char filename[100];
 	string tmp = "";
 	for(int i=0;i<layer.size()-1;i++) {
+		if(i!=0)tmp += "_";
 		tmp += itoa(layer[i]);
-		tmp += "_";
 	}
-	sprintf(filename, "models/model_finder_%s%d.res",tmp.c_str(),(int)(eta*10));
+	sprintf(filename, "models/model_finder[%s]_%d_%d.res",tmp.c_str(),(int)(eta*10),(int)(mom*10));
 	FILE *f = fopen(filename, "w");
 	for(int i=0;i<ret.size();i++)
 		fprintf(f,"%lf %lf\n",ret[i].first,ret[i].second);
@@ -78,15 +78,17 @@ int randint(int a,int b) {
 void model_finder(VXd& trainX, VXd& trainY, VXd& valX, VXd& valY) {
 	for(int i=0;i<50;i++) {
 		vector<int>layer;
-		int layer_size = rand()%3+2; // 2~4
+		int layer_size = randint(3,4);
 		while(layer_size--){
-			layer.push_back(randint(2,10)*10);
+			layer.push_back(randint(5,15)*10);
 		}
 		layer.push_back(trainY[0].size());
-		for(int j=3;j<=6;j++) {
-			double eta = 0.1*(j);
-			go(layer,eta,trainX,trainY,valX,valY);
-		}
+		for(int k=2;k<=8;k+=2)
+			for(int j=1;j<=5;j++) {
+				double mom = 0.1*k;
+				double eta = 0.1*(j);
+				go(layer,eta,mom,trainX,trainY,valX,valY);
+			}
 	}
 }
 int main(){
