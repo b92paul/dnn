@@ -32,26 +32,6 @@ void flogistic(const MatrixXd& z, MatrixXd& a){
 	a = (((-z).array().exp())+1).array().inverse();
 	return;
 }
-void logistic(const Eigen::MatrixXd& a, Eigen::MatrixXd& z)
-{
-	double const* aPtr = a.data();
-	double const* aEnd = aPtr + a.rows() * a.cols();
-	for(double* zPtr = z.data(); aPtr < aEnd; aPtr++, zPtr++)
-	{
-		if(*aPtr < -45.0)
-			*zPtr = 0.0;
-		else if(*aPtr > 45.0)
-			*zPtr = 1.0;
-		else
-			*zPtr = 1.0 / (1.0 + std::exp(-*aPtr));
-	}
-}
-
-void logistic_prime(const MatrixXd& x, MatrixXd& out)
-{
-		logistic_prime(x,out);
-		out = (out.array()*(out.array()+1)).matrix();
-}
 
 void s2p(const MatrixXd& x, MatrixXd& out){
 	out = (x.array()*(1-x.array()));
@@ -89,8 +69,8 @@ class NetWork
 				delta_w = new MatrixXd[layers];
 				activation = new MatrixXd[layers+1];
 				zs = new MatrixXd[layers];
-				delta_b_old = new VectorXd[layers];
-				delta_w_old = new MatrixXd[layers];
+				//delta_b_old = new VectorXd[layers];
+				//delta_w_old = new MatrixXd[layers];
 				delta = new MatrixXd[layers];
 				srand(time(NULL));
 				for(int i=0;i<layers;i++) 
@@ -101,9 +81,9 @@ class NetWork
 						if(i==0) num=input_size;
 						else num=neuron[i-1];
 						weight[i] = MatrixXd::Random(neuron[i],num)/ sqrt((double)num) *3; //sigma -1 ~ 1
-						delta_b_old[i] = VectorXd::Zero(neuron[i]);
-						if(i==0) delta_w_old[i] = MatrixXd::Zero(neuron[i],input_size);
-						else delta_w_old[i] = MatrixXd::Zero(neuron[i],neuron[i-1]);
+						//delta_b_old[i] = VectorXd::Zero(neuron[i]);
+						//if(i==0) delta_w_old[i] = MatrixXd::Zero(neuron[i],input_size);
+						//else delta_w_old[i] = MatrixXd::Zero(neuron[i],neuron[i-1]);
 				}
 		}
 		~NetWork(){
@@ -164,7 +144,6 @@ class NetWork
 				activation[l] = MatrixXd(neuron[l-1],msize);
 				delta[l-1] = MatrixXd(neuron[l-1],msize);
 			}
-			clock_t start_time = clock();
 			struct timeval tstart, tend;
 			gettimeofday(&tstart, NULL);
 			
@@ -195,7 +174,6 @@ class NetWork
 					printf("-- batch %d done.%s\n",i+1,NC);
 					//return parameter for model finder
 					if(findModel)ans->push_back(make_pair(e_val,e_in));
-					start_time = clock();	
 					gettimeofday(&tstart, NULL);
 				}
 				count+=msize, end+=msize;
@@ -214,12 +192,12 @@ class NetWork
 				else if(e_val>=0.5) eta/=2;
 				*/
 				if(decay) eta = eta /(time/T +1);
-				if(time%2==0)
+				if(time%2==0 or true)
 				{
 					fast_back_propagation(BX,BY,delta_b,delta_w);
 					for(int i=0;i<layers;i++){
-						bias[i].noalias() -= (eta*delta_b[i]+delta_b_old[i]*momentum)/msize;
-						weight[i].noalias() -= (eta*delta_w[i]+delta_w_old[i]*momentum)/msize;	
+						bias[i].noalias() -= (eta*delta_b[i])/msize;
+						weight[i].noalias() -= (eta*delta_w[i])/msize;	
 					}
 				}
 				else {
@@ -302,7 +280,7 @@ class NetWork
 			}
 			fclose(f);
 			puts("done read testId");
-
+			assert(int(name.size()) == testX.cols());
 			// read 48 to 39
 			map<string,string> mp; 
 			if(outsize == 48){
@@ -335,8 +313,10 @@ class NetWork
 			for(int i=0;i<testY.size();i++){
 				if(outsize == 48)
 					fprintf(f,"%s,%s\n",name[i].c_str(),mp[lmap[max_number(testY[i])]].c_str());
-				else if(outsize == 39)
-					fprintf(f,"%s,%s\n",name[i].c_str(),lmap[max_number(testY[i])].c_str());
+				else if(outsize == 39){
+					assert(0<=max_number(testY[i]) && max_number(testY[i])<39);
+				  fprintf(f,"%s,%s\n",name[i].c_str(),lmap[max_number(testY[i])].c_str());
+				}
 				else {puts("error!!");fclose(f);return;}
 			}
 			fclose(f);
@@ -370,7 +350,7 @@ class NetWork
 				if(file.fail()) return false;
 				file>>input_size;
 				file>>layers;
-				delete [] neuron,bias,weight,delta_b,delta_w,delta_b_old,delta_w_old,zs,activation;
+				//delete [] neuron,bias,weight,delta_b,delta_w,delta_b_old,delta_w_old,zs,activation;
 				neuron = new int[layers];
 				bias = new VectorXd[layers];
 				weight = new MatrixXd[layers];
