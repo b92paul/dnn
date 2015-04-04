@@ -21,11 +21,12 @@ char testId[]    = "../../data/merge/test_id.out";
 #define VAL_SIZE 10000
 #define TIME_DECAY true
 #define TIME_DECAY_NUM 30000.0
+/*
 mt19937 rng(0x5EED);
 int randint(int lb, int ub) {
 		return uniform_int_distribution<int>(lb, ub)(rng);
 }
-
+*/
 typedef vector<double> VD;
 typedef vector<VectorXd> VXd;
 int check = 100000;

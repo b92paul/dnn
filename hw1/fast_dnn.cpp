@@ -10,11 +10,16 @@
 #include<time.h>
 #include<ctime>
 #include<sys/time.h>
+#include<random>
 using namespace Eigen;
 using namespace std;
 typedef vector<VectorXd> VXd;
 #define T() transpose()
 //#define NDEBUG 1
+mt19937 rng(0x5EED);
+int randint(int lb, int ub) {
+	return uniform_int_distribution<int>(lb, ub)(rng);
+}
 //color for print
 char color[]="\033[0;32m";
 char NC[]="\033[0m";
@@ -27,7 +32,16 @@ MatrixXd fast_sigmoid(const MatrixXd& x)
 
 		return (((-x).array().exp())+1).array().inverse();
 }
-
+void shuffleTrain(MatrixXd& X,MatrixXd& Y){
+	puts("-- In shuffle Train");
+	int n = X.cols();
+	for(int i = n-1; i >= 0; i--){
+		int idx = randint(0,i);
+		X.col(i).swap(X.col(idx));
+		Y.col(i).swap(Y.col(idx));
+	}
+	puts("-- Done shuffle Tatrix");
+}
 void flogistic(const MatrixXd& z, MatrixXd& a){
 	a = (((-z).array().exp())+1).array().inverse();
 	return;
@@ -169,7 +183,10 @@ class NetWork
 			gettimeofday(&tstart, NULL);
 			
 			for(int i=0; i<epochs; i++){
-				if(end > BX.cols())count=0,end=msize;
+				if(end > BX.cols()){
+					count=0,end=msize;
+					shuffleTrain(BX, BY);
+				}
 				
 				int num = 1000;
 				if(findModel){
