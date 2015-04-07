@@ -22,6 +22,7 @@ char testId[]    = "../../data/merge/test_id2.out";
 #define VAL_SIZE 24823
 #define TIME_DECAY true
 #define TIME_DECAY_NUM 30000.0
+#define NORM 20
 /*
 mt19937 rng(0x5EED);
 int randint(int lb, int ub) {
@@ -47,7 +48,7 @@ void csvToMatrix(char* filename,  MatrixXd& out,int length, int cut){
 		if(split=='\n'){
 			tmpXd = VectorXd::Map(&tmp[0],tmp.size());
 			tmp.clear();
-			out.col(idx++) << tmpXd;
+			out.col(idx++) << tmpXd/NORM;
 			if((idx) % check ==0)printf("read data: %d\n",idx);
 			// break point
 			if(idx == cut) { fclose(csv); return;}
@@ -111,8 +112,8 @@ int main(){
 
 	// new network
 	vector<int> layer;
-	layer.push_back(300);
-	layer.push_back(300);
+	layer.push_back(1024);
+	//layer.push_back(300);
 	//layer.push_back(150);
 	//layer.push_back(150);
 	//layer.push_back(150);
