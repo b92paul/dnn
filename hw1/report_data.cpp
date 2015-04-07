@@ -10,21 +10,22 @@ using Eigen::MatrixXd;
 using Eigen::VectorXd;
 char labelPath[] = "../../data/merge/label_39.out";
 char trainPath[] = "../../data/merge/train.out";
-#define INPUT_SIZE 69
+map<int,const char *>pathmap;
 #define OUTPUT_SIZE 39 
 #define TRAIN_READ 1124823 // Max is 1124823
 #define TEST_READ 180406 // Max is 180406
-#define MOM 0.0
-#define ETA 0.4
 #define BATCH_NUM 50000000 // 1 epoch about 1e6 data
 #define BATCH_SIZE 500
 #define VAL_SIZE 10000
-#define TIME_DECAY false
-#define TIME_DECAY_NUM -1
 typedef vector<double> VD;
 typedef vector<VectorXd> VXd;
 int check = 100000;
-void csvToMatrix(char* filename,  MatrixXd& out,int length, int cut){
+void init(){
+  pathmap[108] = "../../data/merge/train.out";
+	pathmap[69] = "../../data/merge/f_train.out";
+	pathmap[39] = "../../data/merge/m_train.out";
+}
+void csvToMatrix(const char* filename,  MatrixXd& out,int length, int cut){
 	int idx = 0;
 	out = MatrixXd(length, cut);
 	printf("%s\n",filename);
@@ -57,8 +58,8 @@ void shuffleMatrix(MatrixXd& X,MatrixXd& Y, MatrixXd& vX, MatrixXd& vY, int val_
 	puts("-- In shuffleMatrix");
 	int n = X.cols();
 	if(val_size > 0 ){
-		vX = MatrixXd( INPUT_SIZE, val_size);
-		vY = MatrixXd(OUTPUT_SIZE, val_size);
+		vX = MatrixXd( X.rows(), val_size);
+		vY = MatrixXd( Y.rows(), val_size);
 	}
 	for(int i = n-1; i >= 0; i--){
 		int idx = randint(0,i);
@@ -76,10 +77,10 @@ void shuffleMatrix(MatrixXd& X,MatrixXd& Y, MatrixXd& vX, MatrixXd& vY, int val_
 #define Mat MatrixXd
 #define pb push_back
 struct Data{
-	MatrixXd inputX, inputY;
-	MatrixXd valX, valY;
-	void read(char *trainPath=::trainPath){
-		csvToMatrix(trainPath, inputX, INPUT_SIZE, TRAIN_READ);
+	Mat inputX, inputY;
+	Mat valX, valY;
+	void read(int input_size,const char *trainPath=::trainPath){
+		csvToMatrix(trainPath, inputX, input_size, TRAIN_READ);
 		csvToMatrix(labelPath, inputY,OUTPUT_SIZE, TRAIN_READ);
 		shuffleMatrix(inputX, inputY, valX, valY, VAL_SIZE);
 		printf("X size = %lu\n",inputX.rows());
@@ -90,13 +91,19 @@ struct Data{
 		printf("val Y data size = %lu\n",valY.cols());
 	}
 };
-map<int,Data>DataMap;
-
+map<int,Data*>DataMap;
+Data* get_data(int size) {
+  if(DataMap[size]!=0)return DataMap[size];
+	Data *d = new Data();
+	d->read(size,pathmap[size]);
+	return DataMap[size]=d;
+}
 struct Model {
 	vector<int>layer;
 	double eta,mom;
-	int input_len,batch_size;
+	int input_size,batch_size;
 	int epochs;
+	double decay;
 	void read(FILE *f=stdin) {
 		int layer_size;
 		fscanf(f,"%d",&layer_size);
@@ -105,13 +112,28 @@ struct Model {
 			fscanf(f,"%d",&a);
 			layer.pb(a);
 		}
+		layer.pb(OUTPUT_SIZE);
 		fscanf(f,"%lf%lf",&eta,&mom);
-		fscanf(f,"%d",&input_len);
-		fscanf(f,"%d%d",&batch_size,&epochs);
+		fscanf(f,"%d",&input_size);
+		fscanf(f,"%d%d",&epochs,&batch_size);
+		fscanf(f,"%lf",&decay);
+		char buf[100];
+		fscanf(f,"%s",buf);// will be used for initlization state
 	}
 };
-void run(Model &m) {
-
+typedef vector<pair<double,double> > PDD;
+PDD run(Model &m) {
+  NetWork nn(m.layer, m.input_size, m.mom, false /*not predict*/);
+	nn.outsize = OUTPUT_SIZE;	
+	Data *d = get_data(m.input_size);
+	bool decay = m.decay > 0;
+	Mat testX;
+	vector<int>params;
+	params.pb(1e6/m.batch_size);
+	params.pb(1e6*m.epochs/m.batch_size);
+	PDD ans;
+ nn.SGD(d->inputX, d->inputY, m.eta, 1000000, m.batch_size, decay,m.decay,d->valX, d->valY, testX, true, &params,&ans);
+  return ans;
 }
 void work(char *filename) {
   FILE *f = fopen(filename,"r");
@@ -128,7 +150,8 @@ void work(char *filename) {
 	while(T--){
 		Model m;
 		m.read(f);
-		run(m);
+		PDD ans = run(m);
+		for(auto c:ans)printf("%lf %lf\n",c.first,c.second);
 	}
 	fclose(f);
 	fclose(w);
@@ -138,6 +161,7 @@ int main(int argc,char **argv){
 		printf("USAGE: %s input_file_name\n",argv[0]);
 		return 0;
 	}
+	init();
 	work(argv[1]);
 	return 0;
 	// new network
