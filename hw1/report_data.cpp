@@ -120,6 +120,15 @@ struct Model {
 		char buf[100];
 		fscanf(f,"%s",buf);// will be used for initlization state
 	}
+	void output(FILE *f) {
+    fprintf(f,"%d\n",layer.size());
+		for(auto c:layer)fprintf(f,"%d ",c);
+		fprintf(f,"\n");
+		fprintf(f,"eta=%lf mom=%lf\n",eta,mom);
+		fprintf(f,"input_size=%d\n",input_size);
+		fprintf(f,"epochs=%d batch_size=%d\n",epochs,batch_size);
+		fprintf(f,"decay=%lf\n",decay);
+	}
 };
 typedef vector<pair<double,double> > PDD;
 PDD run(Model &m) {
@@ -147,11 +156,15 @@ void work(char *filename) {
 	char out[1000];
 	sprintf(out,"%s.out",filename);
 	FILE *w = fopen(out,"w");
-	while(T--){
+	for(int t=1;t<=T;t++){
+		fprintf(w,"case %d:\n",t);
 		Model m;
 		m.read(f);
 		PDD ans = run(m);
-		for(auto c:ans)printf("%lf %lf\n",c.first,c.second);
+		m.output(w);
+		for(int i=0;i<ans.size();i++)
+			fprintf(w,"\"%lf\"%c",ans[i].first,i==ans.size()-1?'\n':',');
+		fprintf(w,"\n");
 	}
 	fclose(f);
 	fclose(w);
