@@ -20,6 +20,22 @@ mt19937 rng(0x514514);
 int randint(int lb, int ub) {
 	return uniform_int_distribution<int>(lb, ub)(rng);
 }
+std::default_random_engine generator;
+std::normal_distribution<double> distribution(0.0,1.0);
+MatrixXd RandomMat(int row, int col){
+	MatrixXd res(row,col);
+	for(int i=0;i<row;i++){
+		for(int j=0;j<col;j++) res(i,j) = distribution(generator);
+	}
+	return res;
+}
+VectorXd RandomVet(int row){
+	VectorXd res(row);
+	for(int i=0;i<row;i++){
+		res(i) = distribution(generator);
+	}
+	return res;
+}
 //color for print
 char color[]="\033[0;32m";
 char NC[]="\033[0m";
@@ -110,11 +126,12 @@ class NetWork
 				for(int i=0;i<layers;i++) 
 				{
 						neuron[i]=Neuron[i];
-						bias[i] = VectorXd::Random(neuron[i]) * 3;
+						bias[i] = RandomVet(neuron[i]);//VectorXd::Random(neuron[i]) * 3;
 						int num;
 						if(i==0) num=input_size;
 						else num=neuron[i-1];
-						weight[i] = MatrixXd::Random(neuron[i],num)/ sqrt((double)num) *3; //sigma -1 ~ 1
+						weight[i] = RandomMat(neuron[i],num)/ sqrt((double)num);
+						//MatrixXd::Random(neuron[i],num)/ sqrt((double)num) *3; //sigma -1 ~ 1
 						delta_b_old[i] = VectorXd::Zero(neuron[i]);
 						if(i==0) delta_w_old[i] = MatrixXd::Zero(neuron[i],input_size);
 						else delta_w_old[i] = MatrixXd::Zero(neuron[i],neuron[i-1]);
