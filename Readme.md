@@ -22,11 +22,20 @@
 # Compile main program
 
 1. Download Eigen from [Eigen main website](http://eigen.tuxfamily.org/)
-2. link `path/to/Eigen/` to your include path
-3. Go to hw1 dir
+2. link `path/to/Eigen` to your include path
+3. go to hw1 dir
 4. type "make main" in hw1
-	- You could also use `g++ -O2 --std=c++11 main.cpp -o main -Ipath/to/Eigen/` if you don't want to include Eigen in your include path.
+	- You could also use `g++ -O2 --std=c++11 main.cpp -o main -Ipath/to/Eigen` if you don't want to include Eigen in your include path.
 
 # Run main program
 
 1. run main by ./main
+2. it will output test prediction for every 5000 mini-batchs to out/ in default settings
+
+# For concatenated frame feature training
+
+1. run new_fbank.py
+2. run new_l48to39.py
+3. set the parameters in new_main.cpp
+4. type `make new_main`
+5. run new_make by `./new_main`
