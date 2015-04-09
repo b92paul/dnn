@@ -141,7 +141,7 @@ PDD run(Model &m) {
 	params.pb(1e6/m.batch_size);
 	params.pb(1e6*m.epochs/m.batch_size);
 	PDD ans;
- nn.SGD(d->inputX, d->inputY, m.eta, 1000000, m.batch_size, decay,m.decay,d->valX, d->valY, testX, true, &params,&ans);
+ nn.SGD(d->inputX, d->inputY, m.eta, 1e9, m.batch_size, decay,m.decay,d->valX, d->valY, testX, true, &params,&ans);
   return ans;
 }
 void work(char *filename) {
