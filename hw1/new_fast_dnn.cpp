@@ -205,7 +205,7 @@ class NetWork
 					shuffleTrain(BX, BY);
 				}
 				
-				int num = 1000;
+				int num = 5000;
 				if(findModel){
 					num = (*param)[0];
 					if(i == (*param)[1])break;
@@ -233,7 +233,7 @@ class NetWork
 					gettimeofday(&tstart, NULL);
 				}
 				count+=msize, end+=msize;
-				if(printTest && (i+1)%5000 == 0){
+				if(printTest && (i+1)%50000 == 0){
 					char model_name[]="model.QAQ";
 					save_model(model_name);
 					Predict(testX);
