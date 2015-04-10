@@ -15,14 +15,14 @@ char testId[]    = "../../data/merge/test_id2.out";
 #define OUTPUT_SIZE 39 
 #define TRAIN_READ 1124823 // Max is 1124823
 #define TEST_READ 180406 // Max is 180406
-#define MOM 0.8
-#define ETA 0.05
+#define MOM 0.0
+#define ETA 0.1
 #define BATCH_NUM 50000000 // 1 epoch about 1e6 data
 #define BATCH_SIZE 128
 #define VAL_SIZE 24823
 #define TIME_DECAY true
-#define TIME_DECAY_NUM 30000.0
-#define NORM 20
+#define TIME_DECAY_NUM 500000.0
+#define NORM 1.7
 /*
 mt19937 rng(0x5EED);
 int randint(int lb, int ub) {
