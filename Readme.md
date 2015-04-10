@@ -37,5 +37,6 @@
 1. run new_fbank.py
 2. run new_l48to39.py
 3. set the parameters in new_main.cpp
-4. type `make new_main`
+4. type `make new_main` or `make omp_new_main` if you want to use cpu parallelism
 5. run new_make by `./new_main`
+6. default settings have the best result parameters
