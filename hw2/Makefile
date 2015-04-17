@@ -9,6 +9,7 @@ LD = gcc
 
 CFLAGS =   $(SFLAGS) -O3 -fomit-frame-pointer -ffast-math -Wall 
 LDFLAGS =  $(SFLAGS) -O3 -lm -Wall
+LIBS = -lm
 #CFLAGS =  $(SFLAGS) -pg -Wall
 #LDFLAGS = $(SFLAGS) -pg -lm -Wall 
 
