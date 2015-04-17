@@ -7,6 +7,7 @@ int main() {
     xy = (LD**)malloc(sizeof(LD*)*3);
     xy[0] = new LD[2];
     xy[1] = new LD[2];
+    xy[2] = new LD[2];
     xy[0][0] = 0.2;
     xy[0][1] = 0.5;
     xy[1][0] = 0.4;
