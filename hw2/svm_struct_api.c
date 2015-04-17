@@ -21,6 +21,11 @@
 #include <string.h>
 #include "svm_struct/svm_struct_common.h"
 #include "svm_struct_api.h"
+#define LIMIT 999999
+
+int min(int a, int b) {
+  return a < b? a: b;
+}
 
 void        svm_struct_learn_api_init(int argc, char* argv[])
 {
@@ -53,11 +58,41 @@ SAMPLE      read_struct_examples(char *file, STRUCT_LEARN_PARM *sparm)
   SAMPLE   sample;  /* sample */
   EXAMPLE  *examples;
   long     n;       /* number of examples */
+  int i, j, k;
 
-  n=100; /* replace by appropriate number of examples */
+  puts(file);
+  freopen(file, "r", stdin);
+
+  scanf("%d", &n);
+
+  n = min(n, LIMIT);
+  printf("n = %d\n", n);
+
   examples=(EXAMPLE *)my_malloc(sizeof(EXAMPLE)*n);
 
-  /* fill in your code here */
+  for (i = 0; i < n; ++i) {
+    printf("reading %d:\n", i);
+    // read x
+    int frame, length;
+    scanf("%d%d", &frame, &length);
+    examples[i].x.frame = frame;
+    examples[i].x.length = length;
+    printf("length = %d\n", length);
+    double **array = (double**) malloc(frame*sizeof(double*));
+    for (j = 0; j < frame; ++j) {
+      array[j] = (double*) malloc(length*sizeof(double));
+      for (k = 0; k < length; ++k) {
+        scanf("%d", &array[j][k]);
+      }
+    }
+    examples[i].x.feature = array;
+    // read y
+    examples[i].y.phone = (int*) malloc(frame*sizeof(int));
+    for (j = 0; j < frame; ++j)
+      scanf("%d", &examples[i].y.phone[j]);
+  }
+  
+  puts("Data read.");
 
   sample.n=n;
   sample.examples=examples;
@@ -74,7 +109,7 @@ void        init_struct_model(SAMPLE sample, STRUCTMODEL *sm,
      weights that can be learned. Later, the weight vector w will
      contain the learned weights for the model. */
 
-  sm->sizePsi=100; /* replace by appropriate number of features */
+  sm->sizePsi=69*48+48*48; /* replace by appropriate number of features */
 }
 
 CONSTSET    init_struct_constraints(SAMPLE sample, STRUCTMODEL *sm, 
@@ -101,7 +136,7 @@ CONSTSET    init_struct_constraints(SAMPLE sample, STRUCTMODEL *sm,
   else { /* add constraints so that all learned weights are
             positive. WARNING: Currently, they are positive only up to
             precision epsilon set by -e. */
-    c.lhs=my_malloc(sizeof(DOC *)*sizePsi);
+    c.lhs=my_malloc(sizeof(DOC*)*sizePsi);
     c.rhs=my_malloc(sizeof(double)*sizePsi);
     for(i=0; i<sizePsi; i++) {
       words[0].wnum=i+1;
@@ -302,6 +337,7 @@ STRUCTMODEL read_struct_model(char *file, STRUCT_LEARN_PARM *sparm)
 {
   /* Reads structural model sm from file file. This function is used
      only in the prediction module, not in the learning module. */
+
 }
 
 void        write_label(FILE *fp, LABEL y)
