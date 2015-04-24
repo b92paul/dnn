@@ -51,18 +51,19 @@
      10E-10 if COMPACT_CACHED_VECTORS is 2 or 3 
 */
 # define COMPACT_ROUNDING_THRESH 10E-15
-
-
+     
 typedef struct pattern {
   /* this defines the x-part of a training example, e.g. the structure
      for storing a natural language sentence in NLP parsing */
-  int add_your_variables_here;
+  double **feature;
+  int frame;  // frame count
+  int length; // fbank = 69
 } PATTERN;
 
 typedef struct label {
   /* this defines the y-part (the label) of a training example,
      e.g. the parse tree of the corresponding sentence. */
-  int add_your_variables_here;
+  int *phone;
 } LABEL;
 
 typedef struct structmodel {
