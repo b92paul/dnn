@@ -21,10 +21,14 @@
 #include <string.h>
 #include "svm_struct/svm_struct_common.h"
 #include "svm_struct_api.h"
+#include <assert.h>
 #define LIMIT 100
-
 int min(int a, int b) {
   return a < b? a: b;
+}
+void init_label(LABEL *l,int frame) {
+    l->frame = frame;
+    l->phone = (int*)malloc(sizeof(int)*frame);
 }
 
 void        svm_struct_learn_api_init(int argc, char* argv[])
@@ -70,7 +74,7 @@ SAMPLE      read_struct_examples(char *file, STRUCT_LEARN_PARM *sparm)
   examples=(EXAMPLE *)my_malloc(sizeof(EXAMPLE)*n);
 
   for (i = 0; i < n; ++i) {
-    printf("reading %d:\n", i);
+    if(i%100 == 0)printf("reading %d:\n", i);
     // read x
     int frame, length;
     scanf("%d%d", &frame, &length);
@@ -88,6 +92,7 @@ SAMPLE      read_struct_examples(char *file, STRUCT_LEARN_PARM *sparm)
     examples[i].x.feature = array;
     // read y
     examples[i].y.phone = (int*) malloc(frame*sizeof(int));
+    examples[i].y.frame = frame;
     for (j = 0; j < frame; ++j)
       scanf("%d", &examples[i].y.phone[j]);
   }
@@ -226,6 +231,9 @@ LABEL       find_most_violated_constraint_marginrescaling(PATTERN x, LABEL y,
      shall return an empty label as recognized by the function
      empty_label(y). */
   LABEL ybar;
+  init_label(&ybar, x.frame);
+  int i;
+  for(i=0;i<x.frame;i++)ybar.phone[i]=rand()%10;
 
   /* insert your code for computing the label ybar here */
 
@@ -238,7 +246,7 @@ int         empty_label(LABEL y)
      returned by find_most_violated_constraint_???(x, y, sm) if there
      is no incorrect label that can be found for x, or if it is unable
      to label x at all */
-  return(0);
+  return y.phone == NULL;
 }
 
 SVECTOR     *psi(PATTERN x, LABEL y, STRUCTMODEL *sm,
@@ -325,11 +333,18 @@ double      loss(LABEL y, LABEL ybar, STRUCT_LEARN_PARM *sparm)
      y==ybar has to be zero. sparm->loss_function is set with the -l option. */
   if(sparm->loss_function == 0) { /* type 0 loss: 0/1 loss */
                                   /* return 0, if y==ybar. return 1 else */
+    int i;
+    assert(y.frame == ybar.frame);
+    for(i=0;i<y.frame;i++) {
+      if(y.phone[i] != ybar.phone[i])return 1;
+      return 0;
+    }
   }
   else {
     /* Put your code for different loss functions here. But then
        find_most_violated_constraint_???(x, y, sm) has to return the
        highest scoring label with the largest loss. */
+       
   }
 }
 

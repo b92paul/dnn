@@ -64,8 +64,8 @@ typedef struct label {
   /* this defines the y-part (the label) of a training example,
      e.g. the parse tree of the corresponding sentence. */
   int *phone;
+  int frame;
 } LABEL;
-
 typedef struct structmodel {
   double *w;          /* pointer to the learned weights */
   MODEL  *svm_model;  /* the learned SVM model */
