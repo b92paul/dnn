@@ -22,7 +22,8 @@
 #include "svm_struct/svm_struct_common.h"
 #include "svm_struct_api.h"
 #include <assert.h>
-#define LIMIT 10000
+#include "vertibi.h"
+#define LIMIT 100
 int min(int a, int b) {
   return a < b? a: b;
 }
@@ -205,10 +206,10 @@ LABEL       find_most_violated_constraint_slackrescaling(PATTERN x, LABEL y,
   return(ybar);
 }
 
-LABEL       find_most_violated_constraint_marginrescaling(PATTERN x, LABEL y, 
+LABEL find_most_violated_constraint_marginrescaling(PATTERN x, LABEL y, 
 						     STRUCTMODEL *sm, 
-						     STRUCT_LEARN_PARM *sparm)
-{
+						     STRUCT_LEARN_PARM *sparm) {
+  int i;
   /* Finds the label ybar for pattern x that that is responsible for
      the most violated constraint for the margin rescaling
      formulation. For linear slack variables, this is that label ybar
@@ -232,8 +233,15 @@ LABEL       find_most_violated_constraint_marginrescaling(PATTERN x, LABEL y,
      empty_label(y). */
   LABEL ybar;
   init_label(&ybar, x.frame);
-  int i;
+  SVECTOR *fvec = psi(x, y, sm, sparm);
+  long sizePsi = sm->sizePsi;
+  for (i = 0; i < sizePsi; ++i) {
+    printf("%lf ",fvec->words[i].weight); // 0..69*48-1: xy matrix
+                                  // 69*48..69*48+48*48-1: yy matrix
+  }
+  
   for(i=0;i<x.frame;i++)ybar.phone[i]=rand()%10;
+
   /* insert your code for computing the label ybar here */
 
   return(ybar);
@@ -251,6 +259,8 @@ int         empty_label(LABEL y)
 SVECTOR     *psi(PATTERN x, LABEL y, STRUCTMODEL *sm,
 		 STRUCT_LEARN_PARM *sparm)
 {
+  static int count = 0;
+  //if(++count % 100==0)fprintf(stderr,"psi called: %d\n",count);
   /* Returns a feature vector describing the match between pattern x
      and label y. The feature vector is returned as a list of
      SVECTOR's. Each SVECTOR is in a sparse representation of pairs
@@ -278,9 +288,11 @@ SVECTOR     *psi(PATTERN x, LABEL y, STRUCTMODEL *sm,
   long sizePsi = sm->sizePsi;
   long i, j;
   double* v = (double*) malloc(sizePsi*sizeof(double));
+  assert(sizePsi == 69*48+48*47+48);
   for (i = 0; i < sizePsi; ++i) v[i] = 0.0;
   long frame = x.frame;
-  long length = x.length;
+  long length = x.length; // 69
+  assert(length == 69);
 
   for (i = 0; i < frame; ++i) {
     long label = y.phone[i];
@@ -291,7 +303,7 @@ SVECTOR     *psi(PATTERN x, LABEL y, STRUCTMODEL *sm,
   }
 
   for (i = 1; i < frame; ++i) {
-    long label1 = y.phone[i - 1];
+    long label1 = y.phone[i - 1]; // 0~47
     long label2 = y.phone[i];
     v[69 * 48 + label1 * 48 + label2] += 1.0;
   }
@@ -301,7 +313,8 @@ SVECTOR     *psi(PATTERN x, LABEL y, STRUCTMODEL *sm,
   fvec->words = (WORD*) malloc(sizeof(WORD) * sizePsi + 1);
   for (i = 0; i < sizePsi; ++i) {
     fvec->words[i].wnum = i + 1;
-    fvec->words[i].weight = v[i];
+    fvec->words[i].weight = v[i]; // 0..69*48-1: xy matrix
+                                  // 69*48..69*48+48*48-1: yy matrix
   }
   fvec->words[sizePsi].wnum = 0;
 
@@ -322,7 +335,7 @@ SVECTOR     *psi(PATTERN x, LABEL y, STRUCTMODEL *sm,
   }*/
   /* insert code for computing the feature vector for x and y here */
   
-  free(v);
+  free(v); //TODO: 可以直接assign fvec->words[i].weight
   return(fvec);
 }
 
@@ -456,7 +469,6 @@ void        write_struct_model(char *modelfile, STRUCTMODEL *sm,
        file. */
     }
   }
-  puts("gan");
   fprintf(modelfl, "%ld\n", sm->sizePsi);
   for (i = 0; i < sm->sizePsi; ++i) {
     fprintf(modelfl, "%lf ", sm->w[i]);
