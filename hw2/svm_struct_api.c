@@ -420,7 +420,7 @@ void        write_struct_model(char *modelfile, STRUCTMODEL *sm,
   long j,i,sv_num;
   SVECTOR *v;
   MODEL *compact_model=NULL;
-  MODEL *model = (MODEL*) malloc(sizeof(MODEL));
+  MODEL *model = sm->svm_model;
  
   if(verbosity>=1) {
     printf("Writing model file..."); fflush(stdout);
