@@ -2,4 +2,6 @@
 svm_empty_classify
 svm_empty_learn
 *.pyc
+meow
+output
 

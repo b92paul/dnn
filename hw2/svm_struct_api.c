@@ -205,7 +205,15 @@ LABEL       find_most_violated_constraint_slackrescaling(PATTERN x, LABEL y,
 
   return(ybar);
 }
-
+LD calc(PATTERN x, LABEL ybar, LABEL y, STRUCTMODEL *sm, STRUCT_LEARN_PARM *sparm){
+  SVECTOR *vec = psi(x,ybar,sm,sparm);
+  int i=0;
+  LD ret=0;
+  FOR(i,sm->sizePsi)ret += vec->words[i].weight*sm->w[i];
+  free(vec->words);
+  ret += loss(ybar,y,sparm);
+  return ret;
+}
 LABEL find_most_violated_constraint_marginrescaling(PATTERN x, LABEL y, 
 						     STRUCTMODEL *sm, 
 						     STRUCT_LEARN_PARM *sparm) {
@@ -234,24 +242,10 @@ LABEL find_most_violated_constraint_marginrescaling(PATTERN x, LABEL y,
   LABEL ybar;
   ybar.frame = x.frame;
   ybar.phone = work_vertibi_loss_psi(x, 48, sm->w, &y);
+  //LD r1 = calc(x,ybar,y,sm,sparm); //delta(y,ybar)+w*phi(x,ybar)
+  //LD r2 = calc(x,y,y,sm,sparm);
+  //printf("(%lf %lf)",r1,r2);
   return ybar;
-  /*
-  int i;
-  //init_label(&ybar, x.frame);
-  SVECTOR *fvec = psi(x, y, sm, sparm);
-  long sizePsi = sm->sizePsi;
-  Vertibi vertibi;
-  assert(x.length==69);
-  //init_vertibi(&vertibi,x.length,48,x.frame);
-
-  for (i = 0; i < sizePsi; ++i) {
-    //printf("%lf ",fvec->words[i].weight); // 0..69*48-1: xy matrix
-                                  // 69*48..69*48+48*48-1: yy matrix
-  }
-  printf("~~%d\n",x.frame);
-  for(i=0;i<x.frame;i++)ybar.phone[i]=rand()%10;
-
-  return(ybar);*/
   /* insert your code for computing the label ybar here */
 }
 
@@ -267,8 +261,6 @@ int         empty_label(LABEL y)
 SVECTOR     *psi(PATTERN x, LABEL y, STRUCTMODEL *sm,
 		 STRUCT_LEARN_PARM *sparm)
 {
-  static int count = 0;
-  //if(++count % 100==0)fprintf(stderr,"psi called: %d\n",count);
   /* Returns a feature vector describing the match between pattern x
      and label y. The feature vector is returned as a list of
      SVECTOR's. Each SVECTOR is in a sparse representation of pairs
@@ -355,6 +347,7 @@ double      loss(LABEL y, LABEL ybar, STRUCT_LEARN_PARM *sparm)
   assert(y.frame == ybar.frame);
   if(sparm->loss_function == 0) { /* type 0 loss: 0/1 loss */
                                   /* return 0, if y==ybar. return 1 else */
+    assert(0);
     for(i=0;i<y.frame;i++) {
       if(y.phone[i] != ybar.phone[i])return 1;
       return 0;

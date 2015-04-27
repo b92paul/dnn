@@ -48,10 +48,13 @@ int *trace_best_path(int len, int y_num, LD **dp, int **par) {
         ret[i] = id;
     }
     #ifdef DEBUG_VERTIBI
-        for(i=0;i<len;i++) {
-            printf("%d ",ret[i]);
+        static int count = 0;
+        if(++count % 100 == 0){
+            for(i=0;i<len;i++) {
+                printf("%d ",ret[i]);
+            }
+            puts("");
         }
-        puts("");
     #endif
     return ret;
 }
@@ -75,7 +78,7 @@ int* work_vertibi_loss_psi(PATTERN x, int y_num, LD* w, LABEL *y) {
         dp[0][j] = 0;
         FOR(k,x_len)
             dp[0][j] += x.feature[0][k]*w[j*x_len+k]; //hope this is right..
-        if(y!=NULL)dp[0][j] += j != y->phone[0];
+        if(y!=NULL)dp[0][j] += j != y->phone[0];//loss function
     }
     for(i=1;i<len;i++) {
         FOR(j,y_num) {
