@@ -22,7 +22,7 @@
 #include "svm_struct/svm_struct_common.h"
 #include "svm_struct_api.h"
 #include <assert.h>
-#define LIMIT 100
+#define LIMIT 10000
 int min(int a, int b) {
   return a < b? a: b;
 }
@@ -74,7 +74,7 @@ SAMPLE      read_struct_examples(char *file, STRUCT_LEARN_PARM *sparm)
   examples=(EXAMPLE *)my_malloc(sizeof(EXAMPLE)*n);
 
   for (i = 0; i < n; ++i) {
-    if(i%100 == 0)printf("reading %d:\n", i);
+    if(i%500 == 0)printf("reading %d:\n", i);
     // read x
     int frame, length;
     scanf("%d%d", &frame, &length);
@@ -567,6 +567,8 @@ void        free_pattern(PATTERN x) {
 
 void        free_label(LABEL y) {
   /* Frees the memory of y. */
+  free(y.phone);
+  y.phone = 0;
 }
 
 void        free_struct_model(STRUCTMODEL sm) 
