@@ -24,7 +24,7 @@
 #include <assert.h>
 //#define DEBUG_VERTIBI
 #include "vertibi.h"
-#define LIMIT 10000
+#define LIMIT 500
 int min(int a, int b) {
   return a < b? a: b;
 }
@@ -171,7 +171,6 @@ LABEL       classify_struct_example(PATTERN x, STRUCTMODEL *sm,
   LABEL y;
   init_label(&y, x.frame);
   /* insert your code for computing the predicted label y here */
-
   return(y);
 }
 
@@ -231,6 +230,7 @@ LABEL find_most_violated_constraint_marginrescaling(PATTERN x, LABEL y,
      Psi(x,ybar)>Psi(x,y)-1. If the function cannot find a label, it
      shall return an empty label as recognized by the function
      empty_label(y). */
+     //printf("%lf,%lf ",sm->w[0],sm->w[1]);
   LABEL ybar;
   ybar.frame = x.frame;
   ybar.phone = work_vertibi_loss_psi(x, 48, sm->w, &y);
@@ -318,7 +318,7 @@ SVECTOR     *psi(PATTERN x, LABEL y, STRUCTMODEL *sm,
   fvec = (SVECTOR*) malloc(sizeof(SVECTOR));
   fvec->next = NULL;
   fvec->userdefined = NULL;
-  fvec->words = (WORD*) malloc(sizeof(WORD) * sizePsi + 1);
+  fvec->words = (WORD*) malloc(sizeof(WORD) * (sizePsi + 1));
   for (i = 0; i < sizePsi; ++i) {
     fvec->words[i].wnum = i + 1;
     fvec->words[i].weight = v[i]; // 0..69*48-1: xy matrix
@@ -364,11 +364,10 @@ double      loss(LABEL y, LABEL ybar, STRUCT_LEARN_PARM *sparm)
     /* Put your code for different loss functions here. But then
        find_most_violated_constraint_???(x, y, sm) has to return the
        highest scoring label with the largest loss. */
-   int ret=0;
-   for(i=0;i<y.frame;i++) {
+    int ret=0;
+    for(i=0;i<y.frame;i++)
       if(y.phone[i] != ybar.phone[i])ret++;
-      return ret;
-    }    
+    return ret;
   }
 }
 
