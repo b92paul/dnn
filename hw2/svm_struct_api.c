@@ -22,6 +22,7 @@
 #include "svm_struct/svm_struct_common.h"
 #include "svm_struct_api.h"
 #include <assert.h>
+//#define DEBUG_VERTIBI
 #include "vertibi.h"
 #define LIMIT 10000
 int min(int a, int b) {
