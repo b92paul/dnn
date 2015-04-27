@@ -23,7 +23,7 @@
 #include "svm_struct_api.h"
 #include <assert.h>
 #include "vertibi.h"
-#define LIMIT 100
+#define LIMIT 10000
 int min(int a, int b) {
   return a < b? a: b;
 }
@@ -67,10 +67,10 @@ SAMPLE      read_struct_examples(char *file, STRUCT_LEARN_PARM *sparm)
 
   puts(file);
   freopen(file, "r", stdin);
-  scanf("%d", &n);
+  scanf("%ld", &n);
 
   n = min(n, LIMIT);
-  printf("n = %d\n", n);
+  printf("n = %ld\n", n);
 
   examples=(EXAMPLE *)my_malloc(sizeof(EXAMPLE)*n);
 
@@ -209,7 +209,6 @@ LABEL       find_most_violated_constraint_slackrescaling(PATTERN x, LABEL y,
 LABEL find_most_violated_constraint_marginrescaling(PATTERN x, LABEL y, 
 						     STRUCTMODEL *sm, 
 						     STRUCT_LEARN_PARM *sparm) {
-  int i;
   /* Finds the label ybar for pattern x that that is responsible for
      the most violated constraint for the margin rescaling
      formulation. For linear slack variables, this is that label ybar
@@ -232,19 +231,27 @@ LABEL find_most_violated_constraint_marginrescaling(PATTERN x, LABEL y,
      shall return an empty label as recognized by the function
      empty_label(y). */
   LABEL ybar;
-  init_label(&ybar, x.frame);
+  ybar.frame = x.frame;
+  ybar.phone = work_vertibi_loss_psi(x, 48, sm->w, &y);
+  return ybar;
+  /*
+  int i;
+  //init_label(&ybar, x.frame);
   SVECTOR *fvec = psi(x, y, sm, sparm);
   long sizePsi = sm->sizePsi;
+  Vertibi vertibi;
+  assert(x.length==69);
+  //init_vertibi(&vertibi,x.length,48,x.frame);
+
   for (i = 0; i < sizePsi; ++i) {
-    printf("%lf ",fvec->words[i].weight); // 0..69*48-1: xy matrix
+    //printf("%lf ",fvec->words[i].weight); // 0..69*48-1: xy matrix
                                   // 69*48..69*48+48*48-1: yy matrix
   }
-  
+  printf("~~%d\n",x.frame);
   for(i=0;i<x.frame;i++)ybar.phone[i]=rand()%10;
 
+  return(ybar);*/
   /* insert your code for computing the label ybar here */
-
-  return(ybar);
 }
 
 int         empty_label(LABEL y)
@@ -343,10 +350,10 @@ double      loss(LABEL y, LABEL ybar, STRUCT_LEARN_PARM *sparm)
 {
   /* loss for correct label y and predicted label ybar. The loss for
      y==ybar has to be zero. sparm->loss_function is set with the -l option. */
+  int i;
+  assert(y.frame == ybar.frame);
   if(sparm->loss_function == 0) { /* type 0 loss: 0/1 loss */
                                   /* return 0, if y==ybar. return 1 else */
-    int i;
-    assert(y.frame == ybar.frame);
     for(i=0;i<y.frame;i++) {
       if(y.phone[i] != ybar.phone[i])return 1;
       return 0;
@@ -356,7 +363,11 @@ double      loss(LABEL y, LABEL ybar, STRUCT_LEARN_PARM *sparm)
     /* Put your code for different loss functions here. But then
        find_most_violated_constraint_???(x, y, sm) has to return the
        highest scoring label with the largest loss. */
-       
+   int ret=0;
+   for(i=0;i<y.frame;i++) {
+      if(y.phone[i] != ybar.phone[i])ret++;
+      return ret;
+    }    
   }
 }
 

@@ -1,3 +1,4 @@
+#define DEBUG_VERTIBI
 #include "vertibi.h"
 #include <cstdio>
 int x[] = {2,0,0};
