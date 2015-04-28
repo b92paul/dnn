@@ -77,7 +77,7 @@ int* work_vertibi_loss_psi(PATTERN x, int y_num, LD* w, LABEL *y) {
     FOR(j,y_num){
         dp[0][j] = 0;
         FOR(k,x_len)
-            dp[0][j] += x.feature[0][k]*w[j*x_len+k]; //hope this is right..
+            dp[0][j] += x.feature[0][k]*w[j*x_len+k+1]; //hope this is right..
         if(y!=NULL)dp[0][j] += j != y->phone[0];//loss function
     }
     for(i=1;i<len;i++) {
@@ -85,14 +85,14 @@ int* work_vertibi_loss_psi(PATTERN x, int y_num, LD* w, LABEL *y) {
             par[i][j] = -1;
             dp[i][j] = -MAX;
             FOR(k,y_num) {
-                LD tmp = dp[i-1][k]+w[x_len*y_num+k*y_num+j]; // dp[] + yy
+                LD tmp = dp[i-1][k]+w[x_len*y_num+k*y_num+j+1]; // dp[] + yy
                 if(tmp > dp[i][j]){
                     dp[i][j] = tmp;
                     par[i][j] = k;
                 }
             }
             FOR(k,x_len)
-                dp[i][j] += x.feature[i][k]*w[j*x_len+k]; //+xy; hope this is right..
+                dp[i][j] += x.feature[i][k]*w[j*x_len+k+1]; //+xy; hope this is right..
             if(y != NULL) 
                 dp[i][j] += j != y->phone[i] ;//loss function
             assert(par[i][j] >=0);

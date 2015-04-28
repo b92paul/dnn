@@ -16,7 +16,7 @@
 /*   use of this software.                                             */
 /*                                                                     */
 /***********************************************************************/
-
+//./svm_empty_learn  -c 100 -l 1 -v 3 -e 0.01 ../../data/train_0.ark meow
 #include <stdio.h>
 #include <string.h>
 #include "svm_struct/svm_struct_common.h"
@@ -24,7 +24,7 @@
 #include <assert.h>
 //#define DEBUG_VERTIBI
 #include "vertibi.h"
-#define LIMIT 500
+#define LIMIT 50
 int min(int a, int b) {
   return a < b? a: b;
 }
@@ -244,6 +244,17 @@ LABEL find_most_violated_constraint_marginrescaling(PATTERN x, LABEL y,
   int i;
   ybar.frame = x.frame;
   ybar.phone = work_vertibi_loss_psi(x, 48, sm->w, &y);
+  static int count = 0;
+  if(0 && ++count % 100 ==0) {
+    LD r1 = calc(x,ybar,y,sm,sparm);
+    int c=rand()%x.frame;
+    LD tmp = ybar.phone[c];
+    ybar.phone[c] = rand()%48;
+    LD r2 = calc(x,ybar,y,sm,sparm);
+    ybar.phone[c] = tmp;
+    printf("(%lf,%lf)",r1,r2);
+    assert(r1 >= r2);
+  }
   /*LD r1 = calc(x,ybar,y,sm,sparm); //delta(y,ybar)+w*phi(x,ybar)
   LABEL yxd;
   init_label(&yxd,x.frame);
