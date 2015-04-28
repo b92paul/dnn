@@ -170,6 +170,7 @@ LABEL       classify_struct_example(PATTERN x, STRUCTMODEL *sm,
      recognized by the function empty_label(y). */
   LABEL y;
   init_label(&y, x.frame);
+  assert(0);
   /* insert your code for computing the predicted label y here */
   return(y);
 }
@@ -200,7 +201,7 @@ LABEL       find_most_violated_constraint_slackrescaling(PATTERN x, LABEL y,
      shall return an empty label as recognized by the function
      empty_label(y). */
   LABEL ybar;
-
+assert(0);
   /* insert your code for computing the label ybar here */
 
   return(ybar);
@@ -240,11 +241,16 @@ LABEL find_most_violated_constraint_marginrescaling(PATTERN x, LABEL y,
      empty_label(y). */
      //printf("%lf,%lf ",sm->w[0],sm->w[1]);
   LABEL ybar;
+  int i;
   ybar.frame = x.frame;
   ybar.phone = work_vertibi_loss_psi(x, 48, sm->w, &y);
-  //LD r1 = calc(x,ybar,y,sm,sparm); //delta(y,ybar)+w*phi(x,ybar)
-  //LD r2 = calc(x,y,y,sm,sparm);
-  //printf("(%lf %lf)",r1,r2);
+  /*LD r1 = calc(x,ybar,y,sm,sparm); //delta(y,ybar)+w*phi(x,ybar)
+  LABEL yxd;
+  init_label(&yxd,x.frame);
+  for(i=0;i<x.frame;i++)
+    yxd.phone[i]=rand()%48;
+  LD r2 = calc(x,y,yxd,sm,sparm);
+  printf("(%lf %lf)",r1,r2);*/
   return ybar;
   /* insert your code for computing the label ybar here */
 }
@@ -579,12 +585,15 @@ void        write_label(FILE *fp, LABEL y)
 
 void        free_pattern(PATTERN x) {
   /* Frees the memory of x. */
+  int i;
+  for(i=0;i<x.frame;i++)
+    free(x.feature[i]);
+  free(x.feature);
 }
 
 void        free_label(LABEL y) {
   /* Frees the memory of y. */
   free(y.phone);
-  y.phone = 0;
 }
 
 void        free_struct_model(STRUCTMODEL sm) 
