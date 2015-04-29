@@ -16,7 +16,7 @@
 /*   use of this software.                                             */
 /*                                                                     */
 /***********************************************************************/
-//./svm_empty_learn  -c 100 -l 1 -v 3 -e 0.01 ../../data/train_0.ark meow
+//./svm_empty_learn  -c 1 -l 1 -v 3 -e 0.01 ../../data/train_0.ark meow
 #include <stdio.h>
 #include <string.h>
 #include "svm_struct/svm_struct_common.h"
@@ -172,10 +172,10 @@ LABEL       classify_struct_example(PATTERN x, STRUCTMODEL *sm,
   LABEL yhat;
   yhat.frame = x.frame;
   yhat.phone = work_vertibi_loss_psi(x, 48, sm->w, NULL);
-  int i;
+/*  int i;
   for(i=0;i<x.frame;i++)
     printf("%d ",yhat.phone[i]);
-  puts("");
+  puts("");*/
   return yhat;
   /* insert your code for computing the predicted label y here */
 }
