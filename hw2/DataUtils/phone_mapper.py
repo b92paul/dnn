@@ -38,11 +38,13 @@ class Mapper:
 			line = line.strip().split('\t')
 			index, char = line[1].split()
 			self.map_48[line[0]] = int(index)
+			self.list_48[int(index)] = line[0]
 			#print line[0], int(index)
 
 	def ptrans(self, value, source = "48", target = "39"):
 		if source == "48":
 			if target == "39":
+				#print self.map_48_39
 				return self.map_48_39[value]
 		else:
 			if target == "38":

@@ -744,6 +744,7 @@ void svm_learn_struct_joint(SAMPLE sample, STRUCT_LEARN_PARM *sparm,
 
       /**** if `error', then add constraint and recompute QP ****/
       if(slack > (rhs-lhsXw+0.000001)) {
+        printf("%f %f %f\n",slack,rhs,lhsXw);
 	printf("\nWARNING: Slack of most violated constraint is smaller than slack of working\n");
 	printf("         set! There is probably a bug in 'find_most_violated_constraint_*'.\n");
 	printf("slack=%f, newslack=%f\n",slack,rhs-lhsXw);

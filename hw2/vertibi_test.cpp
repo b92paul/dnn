@@ -1,3 +1,4 @@
+#define DEBUG_VERTIBI
 #include "vertibi.h"
 #include <cstdio>
 int x[] = {2,0,0};
@@ -22,9 +23,10 @@ int main() {
     yy[1][0] = 0.4;
     yy[1][1] = 0.6;
     Vertibi a;
-    a.init(3,2,3,x,xy,yy);
-    int *ret = a.work();
+    init_vertibi(&a,3,2,3,x,xy,yy);
+    int *ret = work_vertibi(&a);
     for(int i=0;i<3;i++)printf("%d ",ret[i]);
     puts("");
+    clear_vertibi(&a);
     return 0;
 }
