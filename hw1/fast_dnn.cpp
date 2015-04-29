@@ -106,7 +106,7 @@ class NetWork
 				delta_b_old = new VectorXd[layers];
 				delta_w_old = new MatrixXd[layers];
 				delta = new MatrixXd[layers];
-				srand(time(NULL));
+				//srand(time(NULL));
 				for(int i=0;i<layers;i++) 
 				{
 						neuron[i]=Neuron[i];
