@@ -565,6 +565,9 @@ STRUCTMODEL read_struct_model(char *modelfile, STRUCT_LEARN_PARM *sparm)
 void        write_label(FILE *fp, LABEL y)
 {
   /* Writes label y to file handle fp. */
+  int i;
+  for (i = 0 ; i < y.frame; ++i)
+    fprintf(fp, "%d%c", y.phone[i], (i == y.frame - 1)?'\n':' ');
 } 
 
 void        free_pattern(PATTERN x) {
