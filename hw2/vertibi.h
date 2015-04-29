@@ -84,15 +84,21 @@ int* work_vertibi_loss_psi(PATTERN x, int y_num, LD* w, LABEL *y) {
         FOR(j,y_num) {
             par[i][j] = -1;
             dp[i][j] = -MAX;
+            LD *w_off = w+(x_len*y_num+j+1);
             FOR(k,y_num) {
-                LD tmp = dp[i-1][k]+w[x_len*y_num+k*y_num+j+1]; // dp[] + yy
+                LD tmp = dp[i-1][k]+*w_off;
+                w_off += y_num;
+                //LD tmp = dp[i-1][k]+w[x_len*y_num+k*y_num+j+1]; // dp[] + yy
                 if(tmp > dp[i][j]){
                     dp[i][j] = tmp;
                     par[i][j] = k;
                 }
             }
-            FOR(k,x_len)
-                dp[i][j] += x.feature[i][k]*w[j*x_len+k+1]; //+xy; hope this is right..
+            w_off = w+(j*x_len+1);
+            FOR(k,x_len) {
+                dp[i][j] += x.feature[i][k]*(*w_off); //+xy; hope this is right..
+                w_off++;
+            }
             if(y != NULL) 
                 dp[i][j] += j != y->phone[i] ;//loss function
             assert(par[i][j] >=0);
