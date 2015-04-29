@@ -14,6 +14,7 @@ class FeatureProcessor:
 		fbank_features_file = open(path + '/fbank/test.ark', 'r')
 		
 		output_file = open(path + '/test_0.ark', 'w')
+		label_output_file = open(path + '/test_0.label', 'w')
 		self.LIMIT = limit
 		self.features = {}
 		self.labels = {}
@@ -22,7 +23,7 @@ class FeatureProcessor:
 
 		#self.read_label(labels_48_file)
 		self.read_feature(fbank_features_file)
-		self.output(output_file)
+		self.output(output_file, label_output_file)
 
 		print "Data Loaded"
 
@@ -46,7 +47,7 @@ class FeatureProcessor:
 			if self.count % CHECK_POINT == 0:
 				print str(self.count) + ' entries loaded.'
 
-	def output(self, file):
+	def output(self, file, file_label):
 		self.record_list.sort()
 		file.write(str(len(self.record_list)) + '\n')
 		for label in self.record_list:
@@ -54,6 +55,7 @@ class FeatureProcessor:
 			labels = [0] * len(frames)
 			file.write(str(len(frames)) + ' ' + str(len(frames[0])) + '\n')
 			file.write(label + '\n')
+			file_label.write(label + '\n')
 			for frame in frames:
 				file.write(' '.join(map(str, frame)) + '\n')
 			file.write(' '.join(map(str, labels)) + '\n')
