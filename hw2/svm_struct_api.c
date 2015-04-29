@@ -24,7 +24,7 @@
 #include <assert.h>
 //#define DEBUG_VERTIBI
 #include "vertibi.h"
-#define LIMIT 50
+#define LIMIT 5000000
 int min(int a, int b) {
   return a < b? a: b;
 }
@@ -171,6 +171,10 @@ LABEL       classify_struct_example(PATTERN x, STRUCTMODEL *sm,
   LABEL yhat;
   yhat.frame = x.frame;
   yhat.phone = work_vertibi_loss_psi(x, 48, sm->w, NULL);
+  int i;
+  for(i=0;i<x.frame;i++)
+    printf("%d ",yhat.phone[i]);
+  puts("");
   return yhat;
   /* insert your code for computing the predicted label y here */
 }
@@ -333,7 +337,7 @@ double      loss(LABEL y, LABEL ybar, STRUCT_LEARN_PARM *sparm)
   assert(y.frame == ybar.frame);
   if(sparm->loss_function == 0) { /* type 0 loss: 0/1 loss */
                                   /* return 0, if y==ybar. return 1 else */
-    assert(0);
+    //assert(0);
     for(i=0;i<y.frame;i++) {
       if(y.phone[i] != ybar.phone[i])return 1;
       return 0;
