@@ -4,4 +4,5 @@ svm_empty_learn
 *.pyc
 meow
 output
+svm_struct_model
 

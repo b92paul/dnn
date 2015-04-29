@@ -25,6 +25,7 @@
 //#define DEBUG_VERTIBI
 #include "vertibi.h"
 #define LIMIT 5000000
+#define LIMIT 500000
 int min(int a, int b) {
   return a < b? a: b;
 }
