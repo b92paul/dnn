@@ -26,7 +26,7 @@ class FeatureProcessor:
 		record_count = len(self.record_list)
 		train_count = record_count * 4 / 5
 		valid_count = record_count - train_count
-		#random.shuffle(self.record_list)
+		random.shuffle(self.record_list)
 		self.output(train_output_file, self.record_list[:train_count])
 		self.output(valid_output_file, self.record_list[train_count:])
 
