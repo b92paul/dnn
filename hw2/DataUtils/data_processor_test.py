@@ -35,6 +35,7 @@ class FeatureProcessor:
 			label = '_'.join(label[:2])
 
 			if label not in self.labels:
+				self.labels[label] = []
 				self.features[label] = []
 				self.record_list.append(label)
 
