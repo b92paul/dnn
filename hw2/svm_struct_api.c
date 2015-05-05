@@ -16,7 +16,7 @@
 /*   use of this software.                                             */
 /*                                                                     */
 /***********************************************************************/
-//./svm_empty_learn  -c 1 -l 1 -v 3 -e 0.01 ../../data/train_0.ark meow
+//./svm_empty_learn  -c 1 -l 1 -v 3 ../../data/train_0.ark
 #include <stdio.h>
 #include <string.h>
 #include "svm_struct/svm_struct_common.h"
