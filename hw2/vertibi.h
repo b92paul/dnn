@@ -113,7 +113,7 @@ int* work_vertibi_loss_psi(PATTERN x, int y_num, LD* w, LABEL *y) {
     free2((void**)par,len);
     return ret;
 }
-void work_vertibi_loss_psi_48end(PATTERN x, int y_num, LD* w, LABEL *y, int *yhat_len, int **yhat_array, LD *prob) {
+void work_vertibi_loss_psi_48end(PATTERN x, int y_num, LD* w, LABEL *y, int *yhat_len, int ***yhat_array, LD **prob) {
     /* NOTE: 回傳的yhat是依照機率(log)大排到機率小 (即prob大到小) */
     int **par=0;
     LD **dp=0;
@@ -123,12 +123,13 @@ void work_vertibi_loss_psi_48end(PATTERN x, int y_num, LD* w, LABEL *y, int *yha
     vertibi_dp(x,y_num,w,y,par,dp);
     (*yhat_len) = y_num; //回傳48條
     assert((*yhat_len) <= y_num); //避免想要回傳超過48條QQ
-    yhat_array = (int*)malloc(sizeof(int*)*(*yhat_len));
+    (*yhat_array) = (int**)malloc(sizeof(int*)*(*yhat_len));
+    (*prob) = (LD*)malloc(sizeof(LD)*(*yhat_len));
     int i;
     for(i=0;i<(*yhat_len);i++){
-        yhat_array[i] = trace_best_path(len, y_num, dp, par);
-        int last_y = yhat_array[i][len-1];
-        prob[i] = dp[len-1][last_y];
+        (*yhat_array)[i] = trace_best_path(len, y_num, dp, par);
+        int last_y = (*yhat_array)[i][len-1];
+        (*prob)[i] = dp[len-1][last_y];
         dp[len-1][last_y] = -MAX;
     }
     free2((void**)dp,len); /* TODO: static to make more efficent*/
