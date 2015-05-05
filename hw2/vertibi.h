@@ -122,10 +122,10 @@ void work_vertibi_loss_psi_48end(PATTERN x, int y_num, LD* w, LABEL *y, int *yha
     copy_ld2(&dp,NULL,len,y_num); /* TODO: static to make more efficent*/
     vertibi_dp(x,y_num,w,y,par,dp);
     (*yhat_len) = y_num; //回傳48條
-    assert((*yhat_len) > y_num); //避免想要回傳超過48條QQ
+    assert((*yhat_len) <= y_num); //避免想要回傳超過48條QQ
     yhat_array = (int*)malloc(sizeof(int*)*(*yhat_len));
     int i;
-    for(i=0;i<y_num;i++){
+    for(i=0;i<(*yhat_len);i++){
         yhat_array[i] = trace_best_path(len, y_num, dp, par);
         int last_y = yhat_array[i][len-1];
         prob[i] = dp[len-1][last_y];
