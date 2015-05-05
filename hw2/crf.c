@@ -95,15 +95,16 @@ void calc_vertibi(double *update,double *weight,PATTERN x)
 	int **array;
 	int frame = x.frame;
 	double *prob;
+	puts("QAQ");
 	work_vertibi_loss_psi_48end(x,48,weight,NULL,&len,&array,&prob);
+	puts("QAQ");
 	for(i=0;i<48;i++) 
 	{
 		double pi;
 		pi= exp(prob[i]);
-		//printf("%lf ",prob[i]);
-		//if(i==47) printf("\n");
 		calc_psi(update,x,array[i],2,pi);
 	}
+	puts("QAQ");
 	for(i=0;i<48;i++) free(array[i]);
 	free(array);
 	free(prob);
@@ -160,26 +161,32 @@ int main(int argc,char **argv)
 	{
 		T=T+1;
 		total=0;
-		printf("jizz %d\n",T);
 		if(T%500==0)	write_pla_model("crf.model",weight);
 		for(i=0;i<sample.n;i++)
 		{
+			printf("%d QQ\n",i);
   		yhat.frame = sample.examples[i].x.frame;
   		yhat.phone = work_vertibi_loss_psi(sample.examples[i].x, 48,weight , NULL);
+			printf("%d QQ\n",i);
 			loss_value=loss_func(yhat,sample.examples[i].y);
+			printf("%d QQ\n",i);
 			total+=loss_value;
 			calc_vertibi(update_w,weight,sample.examples[i].x);//w+=psi-psi	
+			printf("%d QQ\n",i);
 			calc_psi(update_w,sample.examples[i].x,sample.examples[i].y.phone,1,1);
+			printf("%d QQ\n",i);
 			counter++;
+			printf("%d QQ\n",i);
 			if(counter==batch)
 			{
-				for(i=0;i<w_len;i++) 
+				for(j=0;j<w_len;j++) 
 				{
 					weight[i]+=(update_w[i]*eta);
 					update_w[i]=0;
 				}
 				counter = 0;
 			}
+			printf("%d QQ\n",i);
 			free(yhat.phone);
 		}
 		printf("%d:%d\n",T,total);
