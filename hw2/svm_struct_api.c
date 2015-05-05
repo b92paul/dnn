@@ -16,13 +16,15 @@
 /*   use of this software.                                             */
 /*                                                                     */
 /***********************************************************************/
-
+//./svm_empty_learn  -c 1 -l 1 -v 3 -e 0.01 ../../data/train_0.ark meow
 #include <stdio.h>
 #include <string.h>
 #include "svm_struct/svm_struct_common.h"
 #include "svm_struct_api.h"
 #include <assert.h>
-#define LIMIT 100
+//#define DEBUG_VERTIBI
+#include "vertibi.h"
+#define LIMIT 5000000
 int min(int a, int b) {
   return a < b? a: b;
 }
@@ -66,15 +68,15 @@ SAMPLE      read_struct_examples(char *file, STRUCT_LEARN_PARM *sparm)
 
   puts(file);
   freopen(file, "r", stdin);
-  scanf("%d", &n);
+  scanf("%ld", &n);
 
   n = min(n, LIMIT);
-  printf("n = %d\n", n);
+  printf("n = %ld\n", n);
 
   examples=(EXAMPLE *)my_malloc(sizeof(EXAMPLE)*n);
 
   for (i = 0; i < n; ++i) {
-    if(i%100 == 0)printf("reading %d:\n", i);
+    if(i%500 == 0)printf("reading %d:\n", i);
     // read x
     int frame, length;
     scanf("%d%d", &frame, &length);
@@ -166,11 +168,15 @@ LABEL       classify_struct_example(PATTERN x, STRUCTMODEL *sm,
      by psi() and range from index 1 to index sm->sizePsi. If the
      function cannot find a label, it shall return an empty label as
      recognized by the function empty_label(y). */
-  LABEL y;
-  init_label(&y, x.frame);
+  LABEL yhat;
+  yhat.frame = x.frame;
+  yhat.phone = work_vertibi_loss_psi(x, 48, sm->w, NULL);
+/*  int i;
+  for(i=0;i<x.frame;i++)
+    printf("%d ",yhat.phone[i]);
+  puts("");*/
+  return yhat;
   /* insert your code for computing the predicted label y here */
-
-  return(y);
 }
 
 LABEL       find_most_violated_constraint_slackrescaling(PATTERN x, LABEL y, 
@@ -199,16 +205,23 @@ LABEL       find_most_violated_constraint_slackrescaling(PATTERN x, LABEL y,
      shall return an empty label as recognized by the function
      empty_label(y). */
   LABEL ybar;
-
+assert(0);
   /* insert your code for computing the label ybar here */
 
   return(ybar);
 }
-
-LABEL       find_most_violated_constraint_marginrescaling(PATTERN x, LABEL y, 
+LD calc(PATTERN x, LABEL ybar, LABEL y, STRUCTMODEL *sm, STRUCT_LEARN_PARM *sparm){
+  SVECTOR *vec = psi(x,ybar,sm,sparm);
+  int i=0;
+  LD ret=0;
+  FOR(i,sm->sizePsi)ret += vec->words[i].weight*sm->w[i];
+  free(vec->words);
+  ret += loss(ybar,y,sparm);
+  return ret;
+}
+LABEL find_most_violated_constraint_marginrescaling(PATTERN x, LABEL y, 
 						     STRUCTMODEL *sm, 
-						     STRUCT_LEARN_PARM *sparm)
-{
+						     STRUCT_LEARN_PARM *sparm) {
   /* Finds the label ybar for pattern x that that is responsible for
      the most violated constraint for the margin rescaling
      formulation. For linear slack variables, this is that label ybar
@@ -230,13 +243,31 @@ LABEL       find_most_violated_constraint_marginrescaling(PATTERN x, LABEL y,
      Psi(x,ybar)>Psi(x,y)-1. If the function cannot find a label, it
      shall return an empty label as recognized by the function
      empty_label(y). */
+     //printf("%lf,%lf ",sm->w[0],sm->w[1]);
   LABEL ybar;
-  init_label(&ybar, x.frame);
   int i;
-  for(i=0;i<x.frame;i++)ybar.phone[i]=rand()%10;
+  ybar.frame = x.frame;
+  ybar.phone = work_vertibi_loss_psi(x, 48, sm->w, &y);
+  static int count = 0;
+  if(0 && ++count % 100 ==0) {
+    LD r1 = calc(x,ybar,y,sm,sparm);
+    int c=rand()%x.frame;
+    LD tmp = ybar.phone[c];
+    ybar.phone[c] = rand()%48;
+    LD r2 = calc(x,ybar,y,sm,sparm);
+    ybar.phone[c] = tmp;
+    printf("(%lf,%lf)",r1,r2);
+    assert(r1 >= r2);
+  }
+  /*LD r1 = calc(x,ybar,y,sm,sparm); //delta(y,ybar)+w*phi(x,ybar)
+  LABEL yxd;
+  init_label(&yxd,x.frame);
+  for(i=0;i<x.frame;i++)
+    yxd.phone[i]=rand()%48;
+  LD r2 = calc(x,y,yxd,sm,sparm);
+  printf("(%lf %lf)",r1,r2);*/
+  return ybar;
   /* insert your code for computing the label ybar here */
-
-  return(ybar);
 }
 
 int         empty_label(LABEL y)
@@ -271,69 +302,42 @@ SVECTOR     *psi(PATTERN x, LABEL y, STRUCTMODEL *sm,
      that ybar!=y that maximizes psi(x,ybar,sm)*sm.w (where * is the
      inner vector product) and the appropriate function of the
      loss + margin/slack rescaling method. See that paper for details. */
-  
-  SVECTOR *fvec=NULL;
-
-  SVECTOR *now = fvec;
   long sizePsi = sm->sizePsi;
-  long i, j;
-  double* v = (double*) malloc(sizePsi*sizeof(double));
-  for (i = 0; i < sizePsi; ++i) v[i] = 0.0;
+  long i,j;
+  assert(sizePsi == 69*48+48*47+48);
+  WORD *words = (WORD*)malloc((sizePsi+1)*sizeof(WORD));
   long frame = x.frame;
-  long length = x.length;
-
+  long length = x.length; // 69
+  assert(length == 69);
+  for(i=0;i<sizePsi;i++){
+    words[i].wnum = i+1;
+    words[i].weight=0;
+  }
+  words[sizePsi].wnum = 0;
   for (i = 0; i < frame; ++i) {
     long label = y.phone[i];
     for (j = 0; j < length; ++j) {
-      v[label * 69 + j] += x.feature[i][j]; 
-      //printf("%f\n", x.feature[i][j]);
+      words[label * 69 + j].weight += x.feature[i][j]; 
     }
   }
-
   for (i = 1; i < frame; ++i) {
-    long label1 = y.phone[i - 1];
+    long label1 = y.phone[i - 1]; // 0~47
     long label2 = y.phone[i];
-    v[69 * 48 + label1 * 48 + label2] += 1.0;
+    words[69 * 48 + label1 * 48 + label2].weight += 1.0;
   }
-  fvec = (SVECTOR*) malloc(sizeof(SVECTOR));
-  fvec->next = NULL;
-  fvec->userdefined = NULL;
-  fvec->words = (WORD*) malloc(sizeof(WORD) * sizePsi + 1);
-  for (i = 0; i < sizePsi; ++i) {
-    fvec->words[i].wnum = i + 1;
-    fvec->words[i].weight = v[i];
-  }
-  fvec->words[sizePsi].wnum = 0;
-
-  /*
-  for (i = 0; i < sizePsi; ++i) {
-    if (i) {
-      now->next = (SVECTOR*) malloc(sizeof(SVECTOR));
-      now = now->next;
-    } else {
-      now = fvec = (SVECTOR*) malloc(sizeof(SVECTOR));
-    }
-    now->words = (WORD*) malloc(sizeof(WORD) * 2);//
-    now->words[0].wnum = i + 1;
-    now->words[0].weight = v[i];
-    now->words[1].wnum = 0;
-    now->factor = 1.0;
-    now->next = NULL;
-  }*/
+  return create_svector_shallow(words,NULL,1.0);
   /* insert code for computing the feature vector for x and y here */
-  
-  free(v);
-  return(fvec);
 }
 
 double      loss(LABEL y, LABEL ybar, STRUCT_LEARN_PARM *sparm)
 {
   /* loss for correct label y and predicted label ybar. The loss for
      y==ybar has to be zero. sparm->loss_function is set with the -l option. */
+  int i;
+  assert(y.frame == ybar.frame);
   if(sparm->loss_function == 0) { /* type 0 loss: 0/1 loss */
                                   /* return 0, if y==ybar. return 1 else */
-    int i;
-    assert(y.frame == ybar.frame);
+    //assert(0);
     for(i=0;i<y.frame;i++) {
       if(y.phone[i] != ybar.phone[i])return 1;
       return 0;
@@ -343,7 +347,10 @@ double      loss(LABEL y, LABEL ybar, STRUCT_LEARN_PARM *sparm)
     /* Put your code for different loss functions here. But then
        find_most_violated_constraint_???(x, y, sm) has to return the
        highest scoring label with the largest loss. */
-       
+    int ret=0;
+    for(i=0;i<y.frame;i++)
+      if(y.phone[i] != ybar.phone[i])ret++;
+    return ret;
   }
 }
 
@@ -396,7 +403,7 @@ void        write_struct_model(char *modelfile, STRUCTMODEL *sm,
   long j,i,sv_num;
   SVECTOR *v;
   MODEL *compact_model=NULL;
-  MODEL *model = (MODEL*) malloc(sizeof(MODEL));
+  MODEL *model = sm->svm_model;
  
   if(verbosity>=1) {
     printf("Writing model file..."); fflush(stdout);
@@ -456,7 +463,6 @@ void        write_struct_model(char *modelfile, STRUCTMODEL *sm,
        file. */
     }
   }
-  puts("gan");
   fprintf(modelfl, "%ld\n", sm->sizePsi);
   for (i = 0; i < sm->sizePsi; ++i) {
     fprintf(modelfl, "%lf ", sm->w[i]);
@@ -559,14 +565,22 @@ STRUCTMODEL read_struct_model(char *modelfile, STRUCT_LEARN_PARM *sparm)
 void        write_label(FILE *fp, LABEL y)
 {
   /* Writes label y to file handle fp. */
+  int i;
+  for (i = 0 ; i < y.frame; ++i)
+    fprintf(fp, "%d%c", y.phone[i], (i == y.frame - 1)?'\n':' ');
 } 
 
 void        free_pattern(PATTERN x) {
   /* Frees the memory of x. */
+  int i;
+  for(i=0;i<x.frame;i++)
+    free(x.feature[i]);
+  free(x.feature);
 }
 
 void        free_label(LABEL y) {
   /* Frees the memory of y. */
+  free(y.phone);
 }
 
 void        free_struct_model(STRUCTMODEL sm) 

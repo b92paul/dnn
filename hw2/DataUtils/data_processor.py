@@ -13,7 +13,8 @@ class FeatureProcessor:
 		labels_48_file = open(path + '/label/train.lab', 'r')
 		fbank_features_file = open(path + '/fbank/train.ark', 'r')
 		
-		output_file = open(path + '/train_0.ark', 'w')
+		train_output_file = open(path + '/train_0.ark', 'w')
+		valid_output_file = open(path + '/valid_0.ark', 'w')
 		self.LIMIT = limit
 		self.features = {}
 		self.labels = {}
@@ -22,7 +23,12 @@ class FeatureProcessor:
 
 		self.read_label(labels_48_file)
 		self.read_feature(fbank_features_file)
-		self.output(output_file)
+		record_count = len(self.record_list)
+		train_count = record_count * 4 / 5
+		valid_count = record_count - train_count
+		random.shuffle(self.record_list)
+		self.output(train_output_file, self.record_list[:train_count])
+		self.output(valid_output_file, self.record_list[train_count:])
 
 		print "Data Loaded"
 
@@ -54,10 +60,10 @@ class FeatureProcessor:
 				self.record_list.append(label)
 			self.labels[label].append(phone)
 
-	def output(self, file):
-		self.record_list.sort()
-		file.write(str(len(self.record_list)) + '\n')
-		for label in self.record_list:
+	def output(self, file, records):
+		records.sort()
+		file.write(str(len(records)) + '\n')
+		for label in records:
 			frames = self.features[label]
 			file.write(str(len(frames)) + ' ' + str(len(frames[0])) + '\n')
 			file.write(label + '\n')

@@ -67,7 +67,7 @@ typedef struct label {
   int frame;
 } LABEL;
 typedef struct structmodel {
-  double *w;          /* pointer to the learned weights */
+  double *w;          /* pointer to the learned weights, size==sizePsi */
   MODEL  *svm_model;  /* the learned SVM model */
   long   sizePsi;     /* maximum number of weights in w */
   double walpha;
