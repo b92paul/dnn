@@ -31,6 +31,13 @@ def alpha(num):
 	else:
 		return chr(ord('A') + num - 26)
 
+def kill_single(array):
+	ret = []
+	for i in xrange(len(array)):
+		if i > 0 and array[i] == array[i - 1]:
+			ret.append(array[i])
+	return ret
+
 class FeatureProcessor:
 
 	def __init__(self, path = '../../../data', limit = -1):
@@ -59,6 +66,7 @@ class FeatureProcessor:
 		for line in file_in:
 			file_out.write(self.labels[count] + ',')
 			phones = map(int, line.split())
+			phones = kill_single(phones)
 			phones = map(to39, phones)
 			phones = reduce(phones)
 			phones = ''.join(map(alpha, phones))
