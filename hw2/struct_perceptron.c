@@ -3,6 +3,7 @@
 #include "svm_struct_api.h"
 #include"vertibi.h"
 #include<time.h>
+#include<stdlib.h>
 #define LIMIT 5000000
 double *my_psi;
 int min(int a,int b)
@@ -53,47 +54,6 @@ SAMPLE read_training(char *file)
   }
   
   puts("Data read.");
-  sample.n=n;
-  sample.examples=examples;
-  return sample;
-}
-SAMPLE read_test(char *file)
-{
-  /* Reads struct examples and returns them in sample. The number of
-     examples must be written into sample.n */
-  SAMPLE   sample;  /* sample */
-  EXAMPLE  *examples;
-  long	n;       /* number of examples */
-  int i, j, k;
-
-  puts(file);
-  freopen(file, "r", stdin);
-  scanf("%ld", &n);
-
-  n = min(n, LIMIT);
-  printf("n = %ld\n", n);
-
-  examples=(EXAMPLE *)malloc(sizeof(EXAMPLE)*n);
-
-  for (i = 0; i < n; ++i) {
-    if(i%500 == 0)printf("reading %d:\n", i);
-    // read x
-    int frame, length;
-    scanf("%d%d", &frame, &length);
-    scanf("%*s");
-    //printf("frame = %d, length = %d\n", frame, length);
-    examples[i].x.frame = frame;
-    examples[i].x.length = length;
-    double **array = (double**) malloc(frame*sizeof(double*));
-    for (j = 0; j < frame; ++j) {
-      array[j] = (double*) malloc(length*sizeof(double));
-      for (k = 0; k < length; ++k) {
-        scanf("%lf", &array[j][k]);
-      }
-    }
-    examples[i].x.feature = array;
-  }
-  puts("Test read.");
   sample.n=n;
   sample.examples=examples;
   return sample;
@@ -149,11 +109,29 @@ void calc_psi(double *w,PATTERN x,LABEL y,int flag)
 	for(i=1;i<=sizePsi;i++) ans+=w[i]*my_psi[i-1];
 	return ans;
 }*/
+void write_pla_model(char* filename,double *weight)
+{
+	int w_len = 69*48+48*48+1,i;
+	FILE *file=fopen(filename,"w");
+	for(i=1;i<=w_len;i++)
+		fprintf(file,"%lf\n",weight[i]);
+	fclose(file);
+	return;
+}
+void read_pla_model(char* filename,double *weight)
+{
+	int w_len = 69*48+48*48+1,i;
+	FILE *file=fopen(filename,"r");
+	for(i=1;i<=w_len;i++)
+		fscanf(file,"%lf",&weight[i]);
+	fclose(file);
+	return;
+}
 int main(int argc,char **argv)
 {
 	if(argc<3) 
 	{
-		printf("argv: training data,testing data,iteration\n");
+		printf("argv: training data,testing data,iteration,read model\n");
 		return 0;
 	}
 	SAMPLE sample = read_training(argv[1]);
@@ -161,8 +139,9 @@ int main(int argc,char **argv)
 	int w_len = 69*48+48*48+1,i,j;
 	weight = (double*)malloc(sizeof(double)*w_len);
 	for(i=0;i<w_len;i++) weight[i]=0;
+	if(argc>=5) read_pla_model(argv[4],weight);
 	int is_break;
-	int iteration = 100000,T=0;
+	int iteration = 10000,T=0;
 	if(argc>=4) iteration = atoi(argv[3]);
 	LABEL yhat;
 	int loss_value,total;
@@ -172,6 +151,10 @@ int main(int argc,char **argv)
 	{
 		T=T+1;
 		total=0;
+		if(T%500==0)
+		{
+						write_pla_model("pla.model",weight);
+		}
 		for(i=0;i<sample.n;i++)
 		{
   		yhat.frame = sample.examples[i].x.frame;
@@ -188,7 +171,7 @@ int main(int argc,char **argv)
 		printf("%d:%d\n",T,total);
 	}
 	//predict
-	SAMPLE test = read_test(argv[2]);
+	SAMPLE test = read_training(argv[2]);
 	FILE *fp = fopen("perceptron.out","w");
 	for(i=0;i<test.n;i++)
 	{		
