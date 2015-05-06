@@ -100,13 +100,26 @@ void calc_vertibi(double *update,double *weight,PATTERN x)
 	int frame = x.frame;
 	double *prob;
 	work_vertibi_loss_psi_48end(x,48,weight,NULL,&len,&array,&prob);
-	//for(i=1;i<48;i++) prob[i]-=prob[0];
-	//prob[0]=0;
+	/*double max=0;
+	for(i=1;i<48;i++) 
+	{
+		prob[i]-=prob[0];
+		if(-prob[i]>=max) max=-prob[i];
+	}
+	prob[0]=0;
+	double sum=0;
 	for(i=0;i<48;i++) 
 	{
-		double pi=1;
-		if(i==0)calc_psi(update,x,array[i],2,pi);
-//		if(rrr%100<=1)printf("%d %lf\n",i,prob[i]);
+		if(max!=0) prob[i]=exp(prob[i]*10.0/max);
+		if(max==0 && i==0) prob[i]=1;
+		sum+=prob[i];
+	}*/
+	for(i=0;i<48;i++) 
+	{
+		//prob[i]/=sum;
+		//calc_psi(update,x,array[i],2,(48-i)/1128.0);
+		calc_psi(update,x,array[i],2,0.02);
+		//if(rrr==205)printf("%d %lf\n",i,prob[i]);
 	}
 	rrr++;
 	for(i=0;i<48;i++) free(array[i]);
@@ -152,16 +165,16 @@ int main(int argc,char **argv)
 	if(argc>=7) read_pla_model(argv[6],weight);
 	int iteration = 10000,T=0;
 	if(argc>=4) iteration = atoi(argv[3]);
-	int batch=100;
+	int batch=10;
 	if(argc>=5) batch = atoi(argv[4]);
-	double eta=1.0;
+	double eta=1;
 	if(argc>=6) eta = atof(argv[5]);
+	printf("eta=%lf\n",eta);
 	LABEL yhat;
 	int loss_value,total;
   int sizePsi = 69*48+48*48;
 	my_psi = (double*)malloc((sizePsi+1)*sizeof(double));
 	int counter=0;
-	batch=1;
 	while(T<iteration)
 	{
 		T=T+1;
@@ -175,15 +188,10 @@ int main(int argc,char **argv)
 			total+=loss_value;
 			calc_vertibi(update_w,weight,sample.examples[i].x);//w+=psi-psi	
 			calc_psi(update_w,sample.examples[i].x,sample.examples[i].y.phone,1,1);
-			counter++;
-			if(counter==batch)
+			for(j=1;j<=w_len;j++) 
 			{
-				for(j=1;j<=w_len;j++) 
-				{
-					weight[j]+=(update_w[j]*eta);
-					update_w[j]=0;
-				}
-				counter = 0;
+				weight[j]+=(update_w[j]*eta);
+				update_w[j]=0;
 			}
 		//	printf("%d QQ\n",i);
 			free(yhat.phone);
