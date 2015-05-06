@@ -29,7 +29,7 @@ SAMPLE read_training(char *file)
   printf("n = %ld\n", n);
 
   examples=(EXAMPLE *)malloc(sizeof(EXAMPLE)*n);
-
+	double max_x=-1;
   for (i = 0; i < n; ++i) {
     if(i%500 == 0)printf("reading %d:\n", i);
     // read x
@@ -44,6 +44,7 @@ SAMPLE read_training(char *file)
       array[j] = (double*) malloc(length*sizeof(double));
       for (k = 0; k < length; ++k) {
         scanf("%lf", &array[j][k]);
+				if(array[j][k]>=max_x) max_x=array[j][k];
       }
     }
     examples[i].x.feature = array;
@@ -53,7 +54,10 @@ SAMPLE read_training(char *file)
     for (j = 0; j < frame; ++j)
       scanf("%d", &examples[i].y.phone[j]);
   }
-  
+  for(i=0;i<n;i++)
+		for(j=0;j<examples[i].x.frame;j++)
+			for(k=0;k<examples[i].x.length;k++)
+				examples[i].x.feature[j][k] /= max_x;
   puts("Data read.");
   sample.n=n;
   sample.examples=examples;
@@ -88,23 +92,23 @@ void calc_psi(double *w,PATTERN x,int* y,int flag,double parm)
 	if(flag==1) for(i=1;i<=sizePsi;i++) w[i]+=my_psi[i-1];
 	else if(flag==2) for(i=1;i<=sizePsi;i++) w[i]-=my_psi[i-1]*parm;
 }
-
+int rrr=1;
 void calc_vertibi(double *update,double *weight,PATTERN x)
 {
   int len=48,i;
 	int **array;
 	int frame = x.frame;
 	double *prob;
-	puts("QAQ");
 	work_vertibi_loss_psi_48end(x,48,weight,NULL,&len,&array,&prob);
-	puts("QAQ");
+	//for(i=1;i<48;i++) prob[i]-=prob[0];
+	//prob[0]=0;
 	for(i=0;i<48;i++) 
 	{
-		double pi;
-		pi= exp(prob[i]);
-		calc_psi(update,x,array[i],2,pi);
+		double pi=1;
+		if(i==0)calc_psi(update,x,array[i],2,pi);
+//		if(rrr%100<=1)printf("%d %lf\n",i,prob[i]);
 	}
-	puts("QAQ");
+	rrr++;
 	for(i=0;i<48;i++) free(array[i]);
 	free(array);
 	free(prob);
@@ -157,6 +161,7 @@ int main(int argc,char **argv)
   int sizePsi = 69*48+48*48;
 	my_psi = (double*)malloc((sizePsi+1)*sizeof(double));
 	int counter=0;
+	batch=1;
 	while(T<iteration)
 	{
 		T=T+1;
@@ -164,29 +169,23 @@ int main(int argc,char **argv)
 		if(T%500==0)	write_pla_model("crf.model",weight);
 		for(i=0;i<sample.n;i++)
 		{
-			printf("%d QQ\n",i);
   		yhat.frame = sample.examples[i].x.frame;
   		yhat.phone = work_vertibi_loss_psi(sample.examples[i].x, 48,weight , NULL);
-			printf("%d QQ\n",i);
 			loss_value=loss_func(yhat,sample.examples[i].y);
-			printf("%d QQ\n",i);
 			total+=loss_value;
 			calc_vertibi(update_w,weight,sample.examples[i].x);//w+=psi-psi	
-			printf("%d QQ\n",i);
 			calc_psi(update_w,sample.examples[i].x,sample.examples[i].y.phone,1,1);
-			printf("%d QQ\n",i);
 			counter++;
-			printf("%d QQ\n",i);
 			if(counter==batch)
 			{
-				for(j=0;j<w_len;j++) 
+				for(j=1;j<=w_len;j++) 
 				{
-					weight[i]+=(update_w[i]*eta);
-					update_w[i]=0;
+					weight[j]+=(update_w[j]*eta);
+					update_w[j]=0;
 				}
 				counter = 0;
 			}
-			printf("%d QQ\n",i);
+		//	printf("%d QQ\n",i);
 			free(yhat.phone);
 		}
 		printf("%d:%d\n",T,total);
