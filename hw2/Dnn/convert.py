@@ -1,11 +1,13 @@
-name = "v4"
-cut = 2
+name = "nn_hmm"
+cut = 1
 f = open("ans/48_"+name+".out","w")
 dnn_res = open("out/48_"+name+".ark")
 lmap39 = open("../../../data/merge/lmap2.out")
 lab_map = {}
 cmap = open("../../../data/48_idx_chr.map")
 chr_map = {}
+file_48_39 = open("../../../data/phones/48_39.map")
+map48_39 = {}
 
 for line in lmap39:
     tmp = line.strip().split()
@@ -13,6 +15,9 @@ for line in lmap39:
 for line in cmap:
     tmp = line.strip().split()
     chr_map[tmp[0]] = tmp[2]
+for line in file_48_39:
+    tmp = line.strip().split()
+    map48_39[tmp[0]] = tmp[1]
 print chr_map,lab_map
 
 def strim(data, out_file):
@@ -22,7 +27,7 @@ def strim(data, out_file):
         idx = idx + 1
         if x == len(data)-1 or data[x] != data[x+1]:
             if idx > cut:
-                now = chr_map[lab_map[ data[x] ]]
+                now = chr_map[map48_39[lab_map[ data[x] ]]]
                 res.append(now)
             idx = 0
     string = ""

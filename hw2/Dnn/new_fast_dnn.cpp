@@ -301,13 +301,12 @@ class NetWork
 				return;
 		}
 		double printProb(const VectorXd& y, FILE* fileout){
-			//int l= y.rows();
-			//printf("%d\n",l);
-			VectorXd tmp = y/(y.sum());
+			VectorXd tmp = feedforward(y);
+			tmp = tmp/(tmp.sum());
 			int l = tmp.rows();
-			//printf("%d\n",l);
 			for(int i=0; i<tmp.rows(); i++){
-				fprintf(fileout,"%.8lf%c",tmp(i),(i==(l-1)?'\n':','));
+				assert(tmp(i)>0);
+				fprintf(fileout,"%.8lf%c",tmp(i),(i==(l-1)?'\n':' '));
 			}
 		}		
 				

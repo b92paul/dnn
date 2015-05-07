@@ -100,6 +100,7 @@ int main(){
 	MatrixXd testX;
 	csvToMatrix(testPath, testX, INPUT_SIZE, TEST_READ);
 	matrixExpansion(testX);
+	/*
 	FILE* out = fopen("out/48_v4.ark","w");
 	int idx = 0;
 	for(int i=0 ;i<word_size.size();i++){
@@ -111,11 +112,21 @@ int main(){
 		}
 	}
 	fclose(out);
-	/*
-	FILE* fileout = fopen("../../../data/test_prob.out","w");
-	nn.printProbAll(testX, fileout);
-	fclose(fileout);
 	*/
+	int idxp = 0;
+	FILE* fileout = fopen("test_prob.out","w");
+	fprintf(fileout,"%lu\n",word_size.size());
+	for(int i=0 ;i<word_size.size();i++){
+		fprintf(fileout,"%s",word_name[i].c_str());
+		fprintf(fileout,"%d\n",word_size[i]);
+		for(int j = 0;j<word_size[i];j++){
+			nn.printProb(testX.col(idxp),fileout);
+			idxp++;
+		}
+	}
+	//nn.printProbAll(testX, fileout);
+	fclose(fileout);
+	
 	return 0;
 
 }
