@@ -1,5 +1,6 @@
 import random
 import numpy as np
+import sys
 
 from phone_mapper import Mapper
 
@@ -44,13 +45,13 @@ def kill_single(array):
 
 class OutputProcessor:
 
-	def __init__(self, path = '../../../data', limit = -1):
+	def __init__(self, path = '../../../data',  limit = -1, prefix='test_0'):
 		#labels_48_file = open(path + '/label/train.lab', 'r')
 		
-		label_file = open(path + '/test_0.label', 'r')
-		output_file = open(path + '/test_0.output', 'r')
+		label_file = open(path + '/'+prefix+'.label', 'r')
+		output_file = open(path + '/'+prefix+'.output', 'r')
 
-		final_file = open(path + '/test_0.csv', 'w')
+		final_file = open(path + '/'+prefix+'.csv', 'w')
 
 		self.labels = []
 
@@ -78,7 +79,11 @@ class OutputProcessor:
 			count += 1
 
 def main():
-	outputProc = OutputProcessor()
+        print "Args: ", str(sys.argv)
+        if len(sys.argv) >= 2:
+            outputProc = OutputProcessor(sys.argv[1],-1,sys.argv[2])
+        else:
+            outputProc = OutputProcessor()
 
 if __name__ == '__main__':
 	main()
