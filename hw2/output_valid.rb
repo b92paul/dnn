@@ -40,7 +40,8 @@ def main(filename)
 	}
 	print "Generating validation output\n"
 	print %x(cd DataUtils; python output_processor.py .. valid_0)
-	print %x(rm valid_0.label valid_0.output)
+	print %x(mv valid_0.csv valid_correct.csv)
+	#print %x(rm valid_0.label valid_0.output)
 end
 
 main($valid_ark)

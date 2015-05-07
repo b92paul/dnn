@@ -38,7 +38,7 @@ def read(file)
   IO.read(file).split("\n")[1..-1]
 end
 
-def main(file1, file2='./valid_0.csv')
+def main(file1, file2='./valid_correct.csv')
   obj1 = read(file1)
 	obj2 = read(file2)
 	print "n1 = #{obj1.size}, n2 = #{obj2.size}\n"
@@ -57,5 +57,5 @@ if ARGV.size == 1
 elsif ARGV.size == 2
   main(ARGV[0],ARGV[1])
 else
-	puts "USAGE: ./verify.rb file1 [file2=./valid_0.csv]"
+	puts "USAGE: ./verify.rb file1 [file2=./valid_correct.csv]"
 end
