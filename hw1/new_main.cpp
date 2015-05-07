@@ -32,7 +32,7 @@ int randint(int lb, int ub) {
 typedef vector<double> VD;
 typedef vector<VectorXd> VXd;
 int check = 100000;
-void csvToMatrix(char* filename,  MatrixXd& out,int length, int cut){
+void csvToMatrix(char* filename,  MatrixXd& out,int length, int cut, double norm = 1){
 	int idx = 0;
 	out = MatrixXd(length, cut);
 	printf("%s\n",filename);
@@ -48,7 +48,7 @@ void csvToMatrix(char* filename,  MatrixXd& out,int length, int cut){
 		if(split=='\n'){
 			tmpXd = VectorXd::Map(&tmp[0],tmp.size());
 			tmp.clear();
-			out.col(idx++) << tmpXd/NORM;
+			out.col(idx++) << tmpXd/norm;
 			if((idx) % check ==0)printf("read data: %d\n",idx);
 			// break point
 			if(idx == cut) { fclose(csv); return;}
@@ -56,7 +56,7 @@ void csvToMatrix(char* filename,  MatrixXd& out,int length, int cut){
 	}
 	if(!tmp.empty()){
 		tmpXd = VectorXd::Map(&tmp[0],tmp.size());
-		out.col(idx++) << tmpXd;
+		out.col(idx++) << tmpXd/norm;
 	}
 	if(cut > out.cols()) out.conservativeResize(Eigen::NoChange, cut);
 	fclose(csv);
@@ -99,7 +99,7 @@ void shuffleMatrix(MatrixXd& X,MatrixXd& Y, MatrixXd& vX, MatrixXd& vY, int val_
 int main(){
 	MatrixXd inputX, inputY;
 	MatrixXd valX, valY;
-	csvToMatrix(trainPath, inputX, INPUT_SIZE, TRAIN_READ);
+	csvToMatrix(trainPath, inputX, INPUT_SIZE, TRAIN_READ, NORM);
 	csvToMatrix(labelPath, inputY,OUTPUT_SIZE, TRAIN_READ);
 	matrixExpansion(inputX);
 	shuffleMatrix(inputX, inputY, valX, valY, VAL_SIZE);
@@ -123,7 +123,7 @@ int main(){
 	
 	//read test data
 	MatrixXd testX;
-	csvToMatrix(testPath, testX, INPUT_SIZE, TEST_READ);
+	csvToMatrix(testPath, testX, INPUT_SIZE, TEST_READ, NORM);
 	matrixExpansion(testX);
 	printf("test data size = %lu\n",testX.cols());
 	nn.SGD(inputX, inputY, ETA, BATCH_NUM, BATCH_SIZE, TIME_DECAY, TIME_DECAY_NUM, valX, valY, testX);
