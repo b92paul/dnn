@@ -58,22 +58,11 @@ int *trace_best_path(int len, int y_num, LD **dp, int **par) {
     #endif
     return ret;
 }
-int* work_vertibi_loss_psi(PATTERN x, int y_num, LD* w, LABEL *y) {
-    /* use y for loss, y=NULL means no lose considered */
-    /* y_num = 48, candidates of y value 0~y_num-1*/
-    /* w: 0..69*48-1: xy matrix
-                    NOTE: w[label * 69 + j] += x.feature[i][j]; 
-          69*48..69*48+48*48-1: yy matrix
-                    NOTE: v[69 * 48 + label1 * 48 + label2] += 1.0;
-    */
+void vertibi_dp(PATTERN x, int y_num, LD *w, LABEL *y, int **par,LD **dp) {
     int i,j,k;
     int len = x.frame;
     int x_len = x.length; // 69
     assert(x_len == 69);
-    int **par=0;
-    LD **dp=0;
-    copy_int2(&par,NULL, len,y_num);
-    copy_ld2(&dp,NULL,len,y_num); /* TODO: static to make more efficent*/
     FOR(j,y_num){
         dp[0][j] = 0;
         FOR(k,x_len)
@@ -104,10 +93,48 @@ int* work_vertibi_loss_psi(PATTERN x, int y_num, LD* w, LABEL *y) {
             assert(par[i][j] >=0);
         }
     }
+}
+int* work_vertibi_loss_psi(PATTERN x, int y_num, LD* w, LABEL *y) {
+    /* use y for loss, y=NULL means no lose considered */
+    /* y_num = 48, candidates of y value 0~y_num-1*/
+    /* w: 0..69*48-1: xy matrix
+                    NOTE: w[label * 69 + j] += x.feature[i][j]; 
+          69*48..69*48+48*48-1: yy matrix
+                    NOTE: v[69 * 48 + label1 * 48 + label2] += 1.0;
+    */
+    int **par=0;
+    LD **dp=0;
+    int len = x.frame;
+    copy_int2(&par,NULL, len,y_num);
+    copy_ld2(&dp,NULL,len,y_num); /* TODO: static to make more efficent*/
+    vertibi_dp(x,y_num,w,y,par,dp);
     int *ret = trace_best_path(len, y_num, dp, par);
     free2((void**)dp,len); /* TODO: static to make more efficent*/
     free2((void**)par,len);
     return ret;
+}
+void work_vertibi_loss_psi_48end(PATTERN x, int y_num, LD* w, LABEL *y, int *yhat_len, int ***yhat_array, LD **prob) {
+    /* NOTE: 回傳的yhat是依照機率(log)大排到機率小 (即prob大到小) */
+    int **par=0;
+    LD **dp=0;
+    int len = x.frame;
+    copy_int2(&par,NULL, len,y_num);
+    copy_ld2(&dp,NULL,len,y_num); /* TODO: static to make more efficent*/
+    vertibi_dp(x,y_num,w,y,par,dp);
+    (*yhat_len) = y_num; //回傳48條
+    assert((*yhat_len) <= y_num); //避免想要回傳超過48條QQ
+    (*yhat_array) = (int**)malloc(sizeof(int*)*(*yhat_len));
+    (*prob) = (LD*)malloc(sizeof(LD)*(*yhat_len));
+    int i;
+    for(i=0;i<(*yhat_len);i++){
+        (*yhat_array)[i] = trace_best_path(len, y_num, dp, par);
+        int last_y = (*yhat_array)[i][len-1];
+        (*prob)[i] = dp[len-1][last_y];
+        dp[len-1][last_y] = -MAX;
+    }
+    free2((void**)dp,len); /* TODO: static to make more efficent*/
+    free2((void**)par,len);
+    return;
 }
 int* work_vertibi(Vertibi *v) {
     int i,j,k;
