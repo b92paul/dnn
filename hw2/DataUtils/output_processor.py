@@ -1,5 +1,6 @@
 import random
 import numpy as np
+import sys
 
 from phone_mapper import Mapper
 
@@ -14,17 +15,21 @@ def reduce(array):
 	for i in xrange(len(array)):
 		if i == 0 or array[i] != array[i - 1]:
 			result.append(array[i])
-	if result[0] == 37:
-		result = result[1:]
-	if result[-1] == 37:
-		result = result[:-1]
 	return result
+
+def trim(array):
+	if array[0] == 37:
+		array = array[1:]
+	if array[-1] == 37:
+		array = array[:-1]
+	return array
 
 def to39(num):
 	phone = mapper.get_phone(num, type="48")
 	phone = mapper.ptrans(phone)
 	phone = mapper.get_index(phone, type="48")
 	return phone
+
 def alpha(num):
 	if num < 26:
 		return chr(ord('a') + num)
@@ -34,22 +39,21 @@ def alpha(num):
 def kill_single(array):
 	ret = []
 	for i in xrange(len(array)):
-		if i > 0 and array[i] == array[i - 1]:
+		if i > 1 and array[i] == array[i - 1] and array[i] == array[i - 2]:
 			ret.append(array[i])
 	return ret
 
-class FeatureProcessor:
+class OutputProcessor:
 
-	def __init__(self, path = '../../../data', limit = -1):
+	def __init__(self, path = '../../../data',  limit = -1, prefix='test_0'):
 		#labels_48_file = open(path + '/label/train.lab', 'r')
 		
-		label_file = open(path + '/test_0.label', 'r')
-		output_file = open(path + '/test_0.output', 'r')
+		label_file = open(path + '/'+prefix+'.label', 'r')
+		output_file = open(path + '/'+prefix+'.output', 'r')
 
-		final_file = open(path + '/test_0.csv', 'w')
+		final_file = open(path + '/'+prefix+'.csv', 'w')
 
 		self.labels = []
-
 
 		self.read_label(label_file)
 		self.read_and_output(output_file, final_file)
@@ -69,13 +73,17 @@ class FeatureProcessor:
 			phones = kill_single(phones)
 			phones = map(to39, phones)
 			phones = reduce(phones)
+			phones = trim(phones)
 			phones = ''.join(map(alpha, phones))
 			file_out.write(phones +'\n')
 			count += 1
 
-
 def main():
-	featureProc = FeatureProcessor()
+        print "Args: ", str(sys.argv)
+        if len(sys.argv) >= 2:
+            outputProc = OutputProcessor(sys.argv[1],-1,sys.argv[2])
+        else:
+            outputProc = OutputProcessor()
 
 if __name__ == '__main__':
 	main()
