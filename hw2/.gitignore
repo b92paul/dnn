@@ -5,4 +5,4 @@ svm_empty_learn
 meow
 output
 svm_struct_model
-
+models/
