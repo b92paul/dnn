@@ -56,5 +56,7 @@ svm_struct_api.o: svm_struct_api.c svm_struct_api.h svm_struct_api_types.h svm_s
 svm_struct_learn_custom.o: svm_struct_learn_custom.c svm_struct_api.h svm_light/svm_common.h svm_struct_api_types.h svm_struct/svm_struct_common.h
 	$(CC) -c $(CFLAGS) svm_struct_learn_custom.c -o svm_struct_learn_custom.o
 
+crf: crf.c svm_struct_api.h svm_struct_api_types.h svm_struct/svm_struct_common.h
+		$(LD) $(LDFLAGS) -w crf.c -o crf $(LIBS)
 struct_perceptron: struct_perceptron.c svm_struct_api.h svm_struct_api_types.h svm_struct/svm_struct_common.h
 	$(LD) $(LDFLAGS) -w struct_perceptron.c -o struct_perceptron
