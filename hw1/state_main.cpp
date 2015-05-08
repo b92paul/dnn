@@ -6,13 +6,13 @@
 using namespace std;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
-char labelPath[] = "../../data/merge/label_392.out";
+char labelPath[] = "../../data/merge/state.out";
 char trainPath[] = "../../data/merge/f_train2.out";
 char testPath[]  = "../../data/merge/f_test2.out";
 char testId[]    = "../../data/merge/test_id2.out";
 #define INPUT_SIZE 69
 #define NN_INPUT_SIZE 345
-#define OUTPUT_SIZE 39 
+#define OUTPUT_SIZE 1943 
 #define TRAIN_READ 1124823 // Max is 1124823
 #define TEST_READ 180406 // Max is 180406
 #define MOM 0.0
@@ -32,7 +32,25 @@ int randint(int lb, int ub) {
 typedef vector<double> VD;
 typedef vector<VectorXd> VXd;
 int check = 100000;
-void csvToMatrix(char* filename,  MatrixXd& out,int length, int cut, double norm = 1){
+void stateToMatrix(char* filename, MatrixXd& out,int length,int cut){
+	int idx = 0;
+	puts("OAO");
+	out = MatrixXd::Zero(length, cut);
+	FILE* csv = fopen(filename, "r");
+	int num;char split;
+	if(csv == NULL){
+		puts("no such file !!!");
+		return;
+	}
+	while(~fscanf(csv,"%d",&num)){
+		printf("%d\n",num);
+		out(num,idx++) = 1.0;
+		if(idx == cut) break;
+	}
+	if(cut > out.cols()) out.conservativeResize(Eigen::NoChange, cut);
+	fclose(csv);
+}
+void csvToMatrix(char* filename,  MatrixXd& out,int length, int cut,double norm=1){
 	int idx = 0;
 	out = MatrixXd(length, cut);
 	printf("%s\n",filename);
@@ -99,8 +117,8 @@ void shuffleMatrix(MatrixXd& X,MatrixXd& Y, MatrixXd& vX, MatrixXd& vY, int val_
 int main(){
 	MatrixXd inputX, inputY;
 	MatrixXd valX, valY;
-	csvToMatrix(trainPath, inputX, INPUT_SIZE, TRAIN_READ, NORM);
-	csvToMatrix(labelPath, inputY,OUTPUT_SIZE, TRAIN_READ);
+	csvToMatrix(trainPath, inputX, INPUT_SIZE, TRAIN_READ,NORM);
+	stateToMatrix(labelPath, inputY,OUTPUT_SIZE, TRAIN_READ);
 	matrixExpansion(inputX);
 	shuffleMatrix(inputX, inputY, valX, valY, VAL_SIZE);
 	printf("X size = %lu\n",inputX.rows());
