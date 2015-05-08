@@ -1,5 +1,7 @@
 load_and_test: load_and_test.cpp new_fast_dnn.cpp
-	g++ -O2 --std=c++11 load_and_test.cpp -o load_and_test
+	wget http://bitbucket.org/eigen/eigen/get/3.2.4.zip
+	unzip 3.2.4.zip
+	g++ -O2 --std=c++11 load_and_test.cpp -o load_and_test -Ieigen-eigen-10219c95fe65
 run:
 	mkdir ../data
 	mkdir ../data/merge
