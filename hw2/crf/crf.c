@@ -54,6 +54,7 @@ SAMPLE read_training(char *file)
     for (j = 0; j < frame; ++j)
       scanf("%d", &examples[i].y.phone[j]);
   }
+	printf("%lf\n",max_x);
   for(i=0;i<n;i++)
 		for(j=0;j<examples[i].x.frame;j++)
 			for(k=0;k<examples[i].x.length;k++)
@@ -163,7 +164,7 @@ int main(int argc,char **argv)
 		update_w[i]=0;
 	}
 	if(argc>=7) read_pla_model(argv[6],weight);
-	int iteration = 10000,T=0;
+	int iteration = 5000,T=0;
 	if(argc>=4) iteration = atoi(argv[3]);
 	int batch=10;
 	if(argc>=5) batch = atoi(argv[4]);
@@ -171,10 +172,13 @@ int main(int argc,char **argv)
 	if(argc>=6) eta = atof(argv[5]);
 	printf("eta=%lf\n",eta);
 	LABEL yhat;
-	int loss_value,total;
+	int loss_value;
+	double total;
   int sizePsi = 69*48+48*48;
 	my_psi = (double*)malloc((sizePsi+1)*sizeof(double));
 	int counter=0;
+	FILE *record;
+	record = fopen("record_aver","w");
 	while(T<iteration)
 	{
 		T=T+1;
@@ -185,18 +189,25 @@ int main(int argc,char **argv)
   		yhat.frame = sample.examples[i].x.frame;
   		yhat.phone = work_vertibi_loss_psi(sample.examples[i].x, 48,weight , NULL);
 			loss_value=loss_func(yhat,sample.examples[i].y);
-			total+=loss_value;
+			total+=(double)loss_value;
 			calc_vertibi(update_w,weight,sample.examples[i].x);//w+=psi-psi	
 			calc_psi(update_w,sample.examples[i].x,sample.examples[i].y.phone,1,1);
-			for(j=1;j<=w_len;j++) 
+			counter++;
+			if(counter == batch)
 			{
-				weight[j]+=(update_w[j]*eta);
-				update_w[j]=0;
+				for(j=1;j<=w_len;j++) 
+				{
+					weight[j]+=(update_w[j]*eta);
+					update_w[j]=0;
+				}
+				counter=0;
 			}
 		//	printf("%d QQ\n",i);
 			free(yhat.phone);
 		}
-		printf("%d:%d\n",T,total);
+		total/=(double)sample.n;
+		printf("%d:%lf\n",T,total);
+		fprintf(record,"%d:%lf\n",T,total);
 	}
 	//predict
 	SAMPLE test = read_training(argv[2]);
@@ -209,7 +220,7 @@ int main(int argc,char **argv)
 		for(j=0;j<yhat.frame;j++)
     	fprintf(fp, "%d%c", yhat.phone[j], (j == yhat.frame - 1)?'\n':' ');
 	}
-	free(my_psi);
-	free(weight);
+	//free(my_psi);
+	//free(weight);
 	return 0;
 }
