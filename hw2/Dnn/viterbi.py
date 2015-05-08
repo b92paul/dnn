@@ -8,7 +8,7 @@ for line in yy_file:
 test_num = int(xy_file.next())
 DP = [0.0 for _ in range(48)]
 DPstr = [[i] for i in range(48)]
-ans = open("ans.out","w")
+ans = open("out/48_nn_hmm.ark","w")
 def argmax(x):
     idx = -1
     for i,y in enumerate(x):
