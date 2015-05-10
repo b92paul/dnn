@@ -68,7 +68,7 @@ int main(int argc, char **argv) {
   while (1) {
     for (a = 0; a < N; a++) bestd[a] = 0;
     for (a = 0; a < N; a++) bestw[a][0] = 0;
-    printf("Enter word or sentence (EXIT to break): ");
+    //printf("Enter word or sentence (EXIT to break): ");
     a = 0;
     while (1) {
       st1[a] = fgetc(stdin);
@@ -99,44 +99,27 @@ int main(int argc, char **argv) {
       for (b = 0; b < words; b++) if (!strcmp(&vocab[b * max_w], st[a])) break;
       if (b == words) b = -1;
       bi[a] = b;
-      printf("\nWord: %s  Position in vocabulary: %lld\n", st[a], bi[a]);
-      if (b == -1) {
-        printf("Out of dictionary word!\n");
-        break;
-      }
+      //printf("\nWord: %s  Position in vocabulary: %lld\n", st[a], bi[a]);
     }
-    if (b == -1) continue;
-    printf("\n                                              Word       Cosine distance\n------------------------------------------------------------------------\n");
-    for (a = 0; a < size; a++) vec[a] = 0;
-    for (b = 0; b < cn; b++) {
-      if (bi[b] == -1) continue;
-      for (a = 0; a < size; a++) vec[a] += M[a + bi[b] * size];
-    }
-    len = 0;
+		if(bi[0]==-1){puts("0");continue;}
+    len =0;
+		for (a = 0; a < size; a++) vec[a] = M[a + bi[0]*size];
     for (a = 0; a < size; a++) len += vec[a] * vec[a];
     len = sqrt(len);
     for (a = 0; a < size; a++) vec[a] /= len;
-    for (a = 0; a < N; a++) bestd[a] = -1;
-    for (a = 0; a < N; a++) bestw[a][0] = 0;
-    for (c = 0; c < words; c++) {
-      a = 0;
-      for (b = 0; b < cn; b++) if (bi[b] == c) a = 1;
-      if (a == 1) continue;
-      dist = 0;
-      for (a = 0; a < size; a++) dist += vec[a] * M[a + c * size];
-      for (a = 0; a < N; a++) {
-        if (dist > bestd[a]) {
-          for (d = N - 1; d > a; d--) {
-            bestd[d] = bestd[d - 1];
-            strcpy(bestw[d], bestw[d - 1]);
-          }
-          bestd[a] = dist;
-          strcpy(bestw[a], &vocab[c * max_w]);
-          break;
-        }
-      }
+    double best = -1;
+		double now = 0,n_len = 0;
+		for (b = 1; b < cn; b++) {
+      if (bi[b] == -1) continue;
+			now = 0, n_len = 0;
+      for (a = 0; a < size; a++){
+				now += vec[a] * M[a + bi[b] * size];
+				n_len += M[a+bi[b]*size] * M[a+bi[b]*size];
+			}
+			now /= sqrt(n_len);
+			if(now > best)best = now;
     }
-    for (a = 0; a < N; a++) printf("%50s\t\t%f\n", bestw[a], bestd[a]);
+		printf("%lf\n",best);
   }
   return 0;
 }
