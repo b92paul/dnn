@@ -1,0 +1,12 @@
+*.o
+svm_empty_classify
+svm_empty_learn
+*.pyc
+meow
+output
+svm_struct_model
+models/
+valid_correct.csv
+valid_0.csv
+valid_0.output
+valid_0.label

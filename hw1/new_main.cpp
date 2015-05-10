@@ -11,18 +11,18 @@ char trainPath[] = "../../data/merge/f_train2.out";
 char testPath[]  = "../../data/merge/f_test2.out";
 char testId[]    = "../../data/merge/test_id2.out";
 #define INPUT_SIZE 69
-#define NN_INPUT_SIZE 621
+#define NN_INPUT_SIZE 345
 #define OUTPUT_SIZE 39 
 #define TRAIN_READ 1124823 // Max is 1124823
 #define TEST_READ 180406 // Max is 180406
-#define MOM 0.2
-#define ETA 0.4
+#define MOM 0.0
+#define ETA 0.1
 #define BATCH_NUM 50000000 // 1 epoch about 1e6 data
-#define BATCH_SIZE 500
+#define BATCH_SIZE 128
 #define VAL_SIZE 24823
 #define TIME_DECAY true
-#define TIME_DECAY_NUM 30000.0
-#define NORM 20
+#define TIME_DECAY_NUM 500000.0
+#define NORM 1.7
 /*
 mt19937 rng(0x5EED);
 int randint(int lb, int ub) {
@@ -32,7 +32,7 @@ int randint(int lb, int ub) {
 typedef vector<double> VD;
 typedef vector<VectorXd> VXd;
 int check = 100000;
-void csvToMatrix(char* filename,  MatrixXd& out,int length, int cut){
+void csvToMatrix(char* filename,  MatrixXd& out,int length, int cut, double norm = 1){
 	int idx = 0;
 	out = MatrixXd(length, cut);
 	printf("%s\n",filename);
@@ -48,7 +48,7 @@ void csvToMatrix(char* filename,  MatrixXd& out,int length, int cut){
 		if(split=='\n'){
 			tmpXd = VectorXd::Map(&tmp[0],tmp.size());
 			tmp.clear();
-			out.col(idx++) << tmpXd/NORM;
+			out.col(idx++) << tmpXd/norm;
 			if((idx) % check ==0)printf("read data: %d\n",idx);
 			// break point
 			if(idx == cut) { fclose(csv); return;}
@@ -56,19 +56,19 @@ void csvToMatrix(char* filename,  MatrixXd& out,int length, int cut){
 	}
 	if(!tmp.empty()){
 		tmpXd = VectorXd::Map(&tmp[0],tmp.size());
-		out.col(idx++) << tmpXd;
+		out.col(idx++) << tmpXd/norm;
 	}
 	if(cut > out.cols()) out.conservativeResize(Eigen::NoChange, cut);
 	fclose(csv);
 }
 void matrixExpansion(MatrixXd& A){
 	printf("%lu %lu\n",A.rows(),A.cols());
-	MatrixXd tmp(A.rows()*9, A.cols());
+	MatrixXd tmp(A.rows()*5, A.cols());
 	int len = A.rows();
 	int total = A.cols();
 	for(int i=0; i<total;i++){
-		for(int j=0 ;j<=8;j++){
-			int idx = (i - 4 + j+total) % total;
+		for(int j=0 ;j<=4;j++){
+			int idx = (i - 4 + j*2+total) % total;
 			tmp.block(j*len,i, len, 1) = A.col(idx);
 		}	
 	}
@@ -99,7 +99,7 @@ void shuffleMatrix(MatrixXd& X,MatrixXd& Y, MatrixXd& vX, MatrixXd& vY, int val_
 int main(){
 	MatrixXd inputX, inputY;
 	MatrixXd valX, valY;
-	csvToMatrix(trainPath, inputX, INPUT_SIZE, TRAIN_READ);
+	csvToMatrix(trainPath, inputX, INPUT_SIZE, TRAIN_READ, NORM);
 	csvToMatrix(labelPath, inputY,OUTPUT_SIZE, TRAIN_READ);
 	matrixExpansion(inputX);
 	shuffleMatrix(inputX, inputY, valX, valY, VAL_SIZE);
@@ -112,8 +112,8 @@ int main(){
 
 	// new network
 	vector<int> layer;
-	layer.push_back(1024);
-	//layer.push_back(300);
+	layer.push_back(512);
+	layer.push_back(512);
 	//layer.push_back(150);
 	//layer.push_back(150);
 	//layer.push_back(150);
@@ -123,7 +123,7 @@ int main(){
 	
 	//read test data
 	MatrixXd testX;
-	csvToMatrix(testPath, testX, INPUT_SIZE, TEST_READ);
+	csvToMatrix(testPath, testX, INPUT_SIZE, TEST_READ, NORM);
 	matrixExpansion(testX);
 	printf("test data size = %lu\n",testX.cols());
 	nn.SGD(inputX, inputY, ETA, BATCH_NUM, BATCH_SIZE, TIME_DECAY, TIME_DECAY_NUM, valX, valY, testX);
