@@ -85,7 +85,7 @@ class NetWork
 				activation = new VectorXd[layers+1];
 				zs = new VectorXd[layers];
 				delta = new VectorXd[layers];
-				record = new VectorXd[bptt];
+				record= new VectorXd[100];
 				srand(time(NULL));
 				for(int i=0;i<layers;i++) 
 				{
@@ -94,9 +94,11 @@ class NetWork
 						if(i==0) num=input_size;
 						else num=neuron[i-1];
 						weight[i] = RandomMat(neuron[i],num)/ sqrt((double)num);
+						delta_w[i] = MatrixXd::Zero(neuron[i],num);
 						if(i<layers-1) 
 						{
 								recur_weight[i] = RandomMat(neuron[i],neuron[i])/ sqrt((double)neuron[i]);
+							  delta_recur_w[i] = MatrixXd::Zero(neuron[i],neuron[i]);
 						}
 				}
 				puts("initial done");
@@ -125,13 +127,14 @@ class NetWork
 		}
 		void fast_back_propagation(const VectorXd& x,const VectorXd& y,MatrixXd *delta_w,MatrixXd *delta_recur_w,int index)
 		{
+				puts("QAQAQ 1");
 				activation[0]=x;
+				puts("QAQAQ 1.5");
 				for(int i=0;i<layers;i++) {
 						if(i<layers-1) zs[i]=weight[i]*activation[i]+recur_weight[i]*activation[i+1] ;
 						else zs[i]=weight[i]*activation[i];
 						activation[i+1]=sigmoid(zs[i]);
 				}
-				//cost function
 				VectorXd &d = delta[layers-1];
 				cost_derivative(activation[layers],y,d);//.cwiseProduct(fast_sigmoid_prime(zs[layers-1]));
 				delta_w[layers-1] += (d* activation[layers-1].T());
@@ -144,7 +147,7 @@ class NetWork
 				for(int i=0;i<min(index,bptt);i++)
 				{
 						delta_recur_w[0] += (delta[0]* record[index-i-1].T());
-						VectorXd tmp =record[index-i-1].array()*(1-record[index-i+1].array()); 
+						VectorXd tmp =record[index-i-1].array()*(1-record[index-i-1].array()); 
 						delta[0] = 
 							(recur_weight[0].T()*delta[0]).cwiseProduct(tmp);
 				}
@@ -152,7 +155,7 @@ class NetWork
 		void cost_derivative(const VectorXd& a,const VectorXd& y,VectorXd& output){output=a-y;return;}
 		
 		void SGD(VectorXd **BX,VectorXd **BY,int data_length,int *sentence_len,double eta,int epochs,int msize,
-				VectorXd **ValX=NULL,VectorXd **ValY=NULL,int Val_len=0,int *Val_sen_len=NULL,VectorXd **testX=NULL,bool isPredict=false)
+				VectorXd **ValX=NULL,VectorXd **ValY=NULL,int Val_len=0,int *Val_sen_len=NULL,VectorXd **testX=NULL,VectorXd **testY=NULL,int test_len=0,int *test_sen_len=NULL,bool isPredict=false)
 		{
 			int count=0,end=msize;
 			puts("--Start SGD.--");
@@ -172,7 +175,7 @@ class NetWork
 						count = 0;
 						end = msize;
 				}
-				printf("%d count=%d end=%d QQ\n",i,count,end);
+				printf("%d QQ\n",i);
 				for(int j=count;j<end;j++)
 				{
 					BatX[j-count] = BX[j];
@@ -204,7 +207,7 @@ class NetWork
 				if(isPredict && (i+1)%50000 == 0){
 					char model_name[]="model.QAQ";
 					save_model(model_name);
-					//Predict(testX);
+					Predict(testX,testY,test_len,test_sen_len);
 				}
 			}
 			delete [] BatX;
@@ -214,17 +217,28 @@ class NetWork
 		void update(VectorXd **BX, VectorXd **BY,int *senten_len,int len,double eta,int time){
 			for(int i=0;i<len;i++)
 			{
-				for(int j=1;j<layers;j++) activation[j] = VectorXd::Zero(neuron[j]);  
+				activation[0] = VectorXd::Zero(200);
+				for(int j=0;j<layers;j++)
+				{
+					if(j!=layers-1)activation[j+1] = VectorXd::Zero(neuron[j]);  
+					zs[j] = VectorXd::Zero(neuron[j]);
+				}
 				for(int j=0;j<senten_len[i];j++)
 				{
-					fast_back_propagation(BX[j][i],BY[j][i],delta_w,delta_recur_w,j);
+					printf("OAO OAO 1\n");
+					if(BX[i][j].size() != 200) printf("--------- %d\n",BX[i][j].size());
+					fast_back_propagation(BX[i][j],BY[i][j],delta_w,delta_recur_w,j);
+					printf("OAO OAO 2\n");
 					record[j]= activation[1];
+					printf("OAO OAO 3\n");
 				}
 			}
+			printf("update done\n");
 			for(int i=0;i<layers;i++){
 				weight[i].noalias() -= (eta*delta_w[i])/len;	
 				if(i != layers-1) recur_weight[i].noalias() -= (eta*delta_recur_w[i])/len;
 			}
+			printf("calc done\n");
 		}
 		
 		double eval_vec(VectorXd **ValBatchX,VectorXd **ValBatchY,int *senten_len,int len)
@@ -264,85 +278,6 @@ class NetWork
 				y.maxCoeff(&maxIndex);
 				return int(maxIndex);
 		}
-		/*
-		void Predict(MatrixXd& testX){
-			puts("--predict!!");
-			VXd testY(testX.cols());	
-			for(int i=0;i<testX.cols();i++){
-				if((i+1)%20000 ==0) printf("predict test:%d\n",i);
-				testY[i] = feedforward(testX.col(i));
-			}
-			if(outsize != testY[0].size()){puts("error!!");return;}
-
-			char buf[10000],buf2[10000];
-			int id;
-			
-			char lmap_path[] = "../../data/merge/lmap2.out";
-			char lmap_path_39[] = "../../data/merge/lmap_392.out";
-			char testId[]    = "../../data/merge/test_id2.out";
-			char map48_39[] = "../../data/phones/48_39.map";
-
-			// read lmap
-			vector<string> lmap(48);
-			FILE* f;
-			if(outsize == 48) f = fopen(lmap_path, "r");
-			else if(outsize == 39) f = fopen(lmap_path_39,"r");
-			else {puts("error!!");return;}
-
-			while(~fscanf(f, "%d %s",&id,buf)){
-				lmap[id] = string(buf);
-			}
-			fclose(f);
-			puts("done read lmap");
-
-			// read testId	
-			vector<string> name;
-			f = fopen(testId,"r");
-			while(~fscanf(f,"%s",buf)){
-				name.push_back(buf);
-			}
-			fclose(f);
-			puts("done read testId");
-
-			// read 48 to 39
-			map<string,string> mp; 
-			if(outsize == 48){
-
-				f = fopen(map48_39,"r");
-				while(~fscanf(f,"%s %s",buf,buf2)){
-					mp[string(buf)] = string(buf2);
-				}
-				fclose(f);
-				puts("done read 48_39map");
-			
-			}
-
-			//filename
-			string output_file = string("");
-			string output_dir = string("out/");
-			//timestamp
-			time_t rawtime;
-			struct tm * timeinfo;
-			time ( &rawtime );
-			timeinfo = localtime ( &rawtime );
-			//e_val e_in in filename
-			sprintf(buf, "%.4f_%.4f_",e_val,e_in);
-			output_file += buf;
-			sprintf(buf, "%s_t",asctime (timeinfo));
-			output_file += string(buf);
-			f = fopen((output_dir+output_file+".csv").c_str(),"w");
-			//output to file
-			fprintf(f,"Id,Prediction\n");
-			for(int i=0;i<testY.size();i++){
-				if(outsize == 48)
-					fprintf(f,"%s,%s\n",name[i].c_str(),mp[lmap[max_number(testY[i])]].c_str());
-				else if(outsize == 39)
-					fprintf(f,"%s,%s\n",name[i].c_str(),lmap[max_number(testY[i])].c_str());
-				else {puts("error!!");fclose(f);return;}
-			}
-			fclose(f);
-			puts("--predict done!!");
-		}*/
 		
 		bool save_model(char file_name[])
 		{
@@ -364,7 +299,40 @@ class NetWork
 				file.close();
 				return true;
 		}
-		
+		double my_norm(double a){	return (a+1)/2;	}
+	  void Predict(VectorXd **testX,VectorXd **testY,int length,int *test_senten_len)
+		{
+				int *ans;
+				ans = new int[5];
+				FILE *out = fopen("output.csv","w");
+				fprintf(out,"id,answer\n");
+				for(int i=0;i<length;i+=5)
+				{
+						for(int j=0;j<5;j++) ans[j] = 0;
+						for(int j=i;j<i+5;j++)
+						{
+								for(int k=0;k<test_senten_len[j];k++)
+								{
+										VectorXd out=feedforward(testX[j][k]);
+										out.normalize();
+										testY[i][j].normalize();
+										double norm = my_norm(out.dot(testY[j][k]));
+										ans[j-i] +=norm;
+								}
+						}
+						double max=-1;
+						int index = 0;
+						for(int j=0;j<5;j++)
+						{
+								if(max<ans[j])
+								{
+										max=ans[j];
+										index=j;
+								}
+						}
+						fprintf(out,"%d,%c\n",i+1,'a'+index);
+				}
+		}
 		bool read_model(char file_name[])
 		{
 				char total_file_name[100] ="saved_models/";
@@ -388,7 +356,6 @@ class NetWork
 				delta_recur_w = new MatrixXd[layers-1];
 				activation = new VectorXd[layers+1];
 				zs = new VectorXd[layers];
-				//delta_w_old = new MatrixXd[layers];
 				for(int i=0;i<layers;i++) file>>neuron[i];
 				for(int i=0;i<layers;i++) 
 				{
