@@ -11,6 +11,7 @@
 #include<ctime>
 #include<sys/time.h>
 #include<random>
+#include<unordered_map>
 using namespace Eigen;
 using namespace std;
 typedef vector<VectorXd> VXd;
@@ -41,24 +42,11 @@ VectorXd sigmoid(VectorXd x)
 		return (((-x).array().exp())+1).array().inverse();
 }
 
-void shuffleTrain(MatrixXd& X,MatrixXd& Y){
-	puts("-- In shuffle Train");
-	int n = X.cols();
-	for(int i = n-1; i >= 0; i--){
-		int idx = randint(0,i);
-		X.col(i).swap(X.col(idx));
-		Y.col(i).swap(Y.col(idx));
-	}
-	puts("-- Done shuffle Tatrix");
-}
-/*void s2p(const VectorXd& x, VectorXd& out){
-	out = (x.array()*(1-x.array()));
-	return;
-}*/
 
 class NetWork
 {
 	public:
+		unordered_map<string,VectorXd> dict;
 		int layers;
 		double momentum;
 		int *neuron;
@@ -73,9 +61,33 @@ class NetWork
 		//int outsize = 48;
 		int bptt=8;
 		VectorXd *record;
+		void read_dict()
+		{
+				FILE *in =fopen("word2vec-read-only/novel.txt","r");
+				int number,vector_len;
+				fscanf(in,"%d%d",&number,&vector_len);
+				string key;
+				double tmp;
+				char x[50];
+				for(int i=0;i<number;i++)
+				{
+						fscanf(in,"%s",x);
+						key.assign(x);
+						VectorXd v = VectorXd::Zero(200);;
+						for(int j=0;j<200;j++)
+						{
+							fscanf(in,"%lf",&tmp);
+							v(j)=tmp;
+						}
+						dict[key] = v;
+				}
+				fclose(in);
+				puts("read dictionary done");
+		}
 		NetWork(vector<int>Neuron, int _input_size,double _momentum=0,bool _printTest=false)
 						:input_size(_input_size),printTest(_printTest),momentum(_momentum)
 		{
+				read_dict();
 				layers = Neuron.size();
 				neuron = new int[layers];
 				weight = new MatrixXd[layers];
@@ -85,7 +97,7 @@ class NetWork
 				activation = new VectorXd[layers+1];
 				zs = new VectorXd[layers];
 				delta = new VectorXd[layers];
-				record= new VectorXd[100];
+				record= new VectorXd[3000];
 				srand(time(NULL));
 				for(int i=0;i<layers;i++) 
 				{
@@ -127,14 +139,15 @@ class NetWork
 		}
 		void fast_back_propagation(const VectorXd& x,const VectorXd& y,MatrixXd *delta_w,MatrixXd *delta_recur_w,int index)
 		{
-				puts("QAQAQ 1");
+				//puts("QAQAQ 1");
 				activation[0]=x;
-				puts("QAQAQ 1.5");
+				//puts("QAQAQ 1.5");
 				for(int i=0;i<layers;i++) {
 						if(i<layers-1) zs[i]=weight[i]*activation[i]+recur_weight[i]*activation[i+1] ;
 						else zs[i]=weight[i]*activation[i];
 						activation[i+1]=sigmoid(zs[i]);
 				}
+				//puts("QAQAQ 2");
 				VectorXd &d = delta[layers-1];
 				cost_derivative(activation[layers],y,d);//.cwiseProduct(fast_sigmoid_prime(zs[layers-1]));
 				delta_w[layers-1] += (d* activation[layers-1].T());
@@ -144,6 +157,7 @@ class NetWork
 						d = (weight[layers-l+1].T()*delta[layers-l+1]).cwiseProduct(d); 
 						delta_w[layers-l] += (d * activation[layers-l].T());
 				}
+				//puts("QAQAQ 3");
 				for(int i=0;i<min(index,bptt);i++)
 				{
 						delta_recur_w[0] += (delta[0]* record[index-i-1].T());
@@ -151,23 +165,24 @@ class NetWork
 						delta[0] = 
 							(recur_weight[0].T()*delta[0]).cwiseProduct(tmp);
 				}
+				//puts("QAQAQ 4");
 		}
 		void cost_derivative(const VectorXd& a,const VectorXd& y,VectorXd& output){output=a-y;return;}
 		
-		void SGD(VectorXd **BX,VectorXd **BY,int data_length,int *sentence_len,double eta,int epochs,int msize,
-				VectorXd **ValX=NULL,VectorXd **ValY=NULL,int Val_len=0,int *Val_sen_len=NULL,VectorXd **testX=NULL,VectorXd **testY=NULL,int test_len=0,int *test_sen_len=NULL,bool isPredict=false)
+		void SGD(string **BX,string **BY,int data_length,int *sentence_len,double eta,int epochs,int msize,
+				string **ValX=NULL,string **ValY=NULL,int Val_len=0,int *Val_sen_len=NULL,string **testX=NULL,string **testY=NULL,int test_len=0,int *test_sen_len=NULL,bool isPredict=true)
 		{
 			int count=0,end=msize;
 			puts("--Start SGD.--");
 			clock_t start_time = clock();
 			struct timeval tstart, tend;
 			gettimeofday(&tstart, NULL);
-			VectorXd **BatX, **BatY;
+			string **BatX, **BatY;
 			int *bat_sentence_len;
-			BatX = new VectorXd*[msize];
-			BatY = new VectorXd*[msize];
+			BatX = new string*[msize];
+			BatY = new string*[msize];
 			bat_sentence_len = new int[msize];
-			printf("batch = %d\n data_len=%d\n",epochs,data_length);
+			printf("batch = %d\ndata_len=%d\n",epochs,data_length);
 			for(int i=0;i<epochs;i++)
 			{
 				if(end >= data_length)
@@ -175,7 +190,7 @@ class NetWork
 						count = 0;
 						end = msize;
 				}
-				printf("%d QQ\n",i);
+				if(i%500 == 0)printf("%d batch\n",i);
 				for(int j=count;j<end;j++)
 				{
 					BatX[j-count] = BX[j];
@@ -185,36 +200,20 @@ class NetWork
 				printf("%d QQ\n",i);
 				update(BatX,BatY,bat_sentence_len,end-count,eta,i);
 				printf("%d QQ\n",i);
-				int num = 50000;
-				if((i+1)%num == 0)
-				{
-					e_val = eval_vec(ValX,ValY,Val_sen_len,Val_len);
-					e_in=eval_vec(BatX,BatY,bat_sentence_len,end-count);
-					gettimeofday(&tend, NULL);
-					double time_delta = ((tend.tv_sec  - tstart.tv_sec) * 1000000u + tend.tv_usec - tstart.tv_usec) / 1.e6;
-					printf("Spend %f time to train %d batch.\n",(time_delta),num);
-					printf("Layer number = %d; ",layers);
-					for(int i=0;i<layers;i++)printf("%d%c",neuron[i],i==(layers-1)?'\n':',');
-					printf("learning rate = %.3f, momentum = %.3f\n",eta, momentum);
-					printf("e_val = %lf\n",e_val);
-					printf("e_in of batch = %lf\n",e_in);
-					printf("-- batch %d done.\n",i+1);
-					start_time = clock();	
-					gettimeofday(&tstart, NULL);
-				}
+				int num = 5000;
 				printf("%d QQ\n",i);
 				count+=msize, end+=msize;
-				if(isPredict && (i+1)%50000 == 0){
-					char model_name[]="model.QAQ";
-					save_model(model_name);
-					Predict(testX,testY,test_len,test_sen_len);
+				if(isPredict && (i+1)%5000 == 0){
+					//char model_name[]="model.QAQ";
+					//save_model(model_name);
+					Predict(testX,testY,test_len,test_sen_len,i);
 				}
 			}
 			delete [] BatX;
 			delete [] BatY;
 			delete [] bat_sentence_len;
 		}
-		void update(VectorXd **BX, VectorXd **BY,int *senten_len,int len,double eta,int time){
+		void update(string **BX, string **BY,int *senten_len,int len,double eta,int time){
 			for(int i=0;i<len;i++)
 			{
 				activation[0] = VectorXd::Zero(200);
@@ -225,47 +224,53 @@ class NetWork
 				}
 				for(int j=0;j<senten_len[i];j++)
 				{
-					printf("OAO OAO 1\n");
-					if(BX[i][j].size() != 200) printf("--------- %d\n",BX[i][j].size());
-					fast_back_propagation(BX[i][j],BY[i][j],delta_w,delta_recur_w,j);
-					printf("OAO OAO 2\n");
+					//printf("OAO OAO 1\n");
+					if(dict[BX[i][j]].size() == 0) dict[BX[i][j]] = VectorXd::Zero(200);//weird
+					if(dict[BY[i][j]].size() == 0) dict[BY[i][j]] = VectorXd::Zero(200);//weird
+					fast_back_propagation(dict[BX[i][j]],dict[BY[i][j]],delta_w,delta_recur_w,j);
+					//printf("OAO OAO 2\n");
 					record[j]= activation[1];
-					printf("OAO OAO 3\n");
+					//printf("OAO OAO 3\n");
 				}
 			}
-			printf("update done\n");
+			//printf("update done\n");
 			for(int i=0;i<layers;i++){
 				weight[i].noalias() -= (eta*delta_w[i])/len;	
 				if(i != layers-1) recur_weight[i].noalias() -= (eta*delta_recur_w[i])/len;
 			}
-			printf("calc done\n");
+			//printf("calc done\n");
 		}
 		
-		double eval_vec(VectorXd **ValBatchX,VectorXd **ValBatchY,int *senten_len,int len)
+		double eval_vec(string **ValBatchX,string **ValBatchY,int *senten_len,int len)
 		{
 				double sum = 0;
 				for(int i=0;i<len;i++)
 				{
 						for(int j=0;j<senten_len[i];j++)
 						{
-								VectorXd out=feedforward(ValBatchX[i][j]);
+								if(dict[ValBatchX[i][j]].size() == 0) dict[ValBatchX[i][j]] = VectorXd::Zero(200);//weird
+								if(dict[ValBatchY[i][j]].size() == 0) dict[ValBatchY[i][j]] = VectorXd::Zero(200);//weird
+								VectorXd out=feedforward(dict[ValBatchX[i][j]]);
 								out.normalize();
-								ValBatchY[i][j].normalize();
-								double dot = out.dot(ValBatchY[i][j]);
+								VectorXd y = dict[ValBatchY[i][j]];
+								y.normalize();
+								double dot = out.dot(y);
 								sum += dot;
 						}		
 				}
 				return sum;
 		}
-		double eval_1ofN(VectorXd **ValBatchX,VectorXd **ValBatchY,int *senten_len,int len)
+		double eval_1ofN(string **ValBatchX,string **ValBatchY,int *senten_len,int len)
 		{
 				int num=0,total=0;
 				for(int i=0;i<len;i++)
 				{
 						for(int j=0;j<senten_len[i];j++)
 						{
-								VectorXd out=feedforward(ValBatchX[i][j]);
-								if(max_number(out) == max_number(ValBatchY[i][j])) num++;
+								if(dict[ValBatchX[i][j]].size() == 0) dict[ValBatchX[i][j]] = VectorXd::Zero(200);//weird
+								if(dict[ValBatchY[i][j]].size() == 0) dict[ValBatchY[i][j]] = VectorXd::Zero(200);//weird
+								VectorXd out=feedforward(dict[ValBatchX[i][j]]);
+								if(max_number(out) == max_number(dict[ValBatchY[i][j]])) num++;
 								total++;
 						}		
 				}
@@ -299,26 +304,35 @@ class NetWork
 				file.close();
 				return true;
 		}
-		double my_norm(double a){	return (a+1)/2;	}
-	  void Predict(VectorXd **testX,VectorXd **testY,int length,int *test_senten_len)
+		double my_norm(double a){	return (a+1.0)/2.0;	}
+	  void Predict(string **testX,string **testY,int length,int *test_senten_len,int t)
 		{
-				int *ans;
-				ans = new int[5];
-				FILE *out = fopen("output.csv","w");
+				double *ans;
+				ans = new double[5];
+				char filename[100];
+				sprintf(filename,"output_%d.csv",t);
+				FILE *out = fopen(filename,"w");
 				fprintf(out,"id,answer\n");
 				for(int i=0;i<length;i+=5)
 				{
 						for(int j=0;j<5;j++) ans[j] = 0;
 						for(int j=i;j<i+5;j++)
 						{
+								double max_number = -2000;
 								for(int k=0;k<test_senten_len[j];k++)
 								{
-										VectorXd out=feedforward(testX[j][k]);
+										if(dict[testX[j][k]].size() == 0) dict[testX[j][k]] = VectorXd::Zero(200);//weird
+										if(dict[testY[j][k]].size() == 0) dict[testY[j][k]] = VectorXd::Zero(200);//weird
+										VectorXd out=feedforward(dict[testX[j][k]]);
+										double sum=0; 
+										for(int i=0;i<200;i++) sum+=out(i);
 										out.normalize();
-										testY[i][j].normalize();
-										double norm = my_norm(out.dot(testY[j][k]));
-										ans[j-i] +=norm;
+										VectorXd y = dict[testY[j][k]];
+										y.normalize();
+										double norm = out.dot(y);
+										if(norm > max_number) max_number = norm;
 								}
+								ans[j-i] = max_number;
 						}
 						double max=-1;
 						int index = 0;
@@ -330,7 +344,7 @@ class NetWork
 										index=j;
 								}
 						}
-						fprintf(out,"%d,%c\n",i+1,'a'+index);
+						fprintf(out,"%d,%c\n",i/5+1,'a'+index);
 				}
 		}
 		bool read_model(char file_name[])

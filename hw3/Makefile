@@ -1,2 +1,2 @@
-all:
-	make -C word2vec-read-only
+main: main.cpp
+	g++ -O2 --std=c++11 main.cpp -o main -w
