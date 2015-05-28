@@ -318,7 +318,6 @@ class NetWork
 						for(int j=0;j<5;j++) ans[j] = 0;
 						for(int j=i;j<i+5;j++)
 						{
-								double max_number = -2000;
 								for(int k=0;k<test_senten_len[j];k++)
 								{
 										if(dict[testX[j][k]].size() == 0) dict[testX[j][k]] = VectorXd::Zero(200);//weird
@@ -330,9 +329,8 @@ class NetWork
 										VectorXd y = dict[testY[j][k]];
 										y.normalize();
 										double norm = out.dot(y);
-										if(norm > max_number) max_number = norm;
+										ans[j-i] += norm;
 								}
-								ans[j-i] = max_number;
 						}
 						double max=-1;
 						int index = 0;
