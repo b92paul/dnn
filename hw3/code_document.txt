@@ -1,0 +1,9 @@
+python merge.py
+./word2vec -train ../merge_novel.txt -output novel.txt -cbow 1 -size 200 -window 8 -negative 25 -hs 0 -sample 1e-4 -threads 20 -binary 0 -iter 15
+cat training/*.TXT ./preprocessing.sh > training2.txt
+python transform.py
+python parse_question.py
+python test_transform.py 
+make
+./main line_number.txt valid.txt 20000 test.txt 0.5 1 1
+(參數意義分別為training data, validation data, traning number of sentences, testing data, eta ,epochs,batch size ，其中eta,epochs,batch size可不輸入,預設為0.5,1,1)
