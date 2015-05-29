@@ -3,3 +3,5 @@ main: main.cpp
 	make -C word2vec-read-only
 sim:
 	make -C word2vec-read-only
+my-distance:
+	g++ my-distance.cpp -o my-distance
