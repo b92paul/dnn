@@ -8,8 +8,8 @@ for i,filename in enumerate(files):
     print i+1,filename
     novel = open(novel_path+filename)
     for line in novel:
-        line = line.replace('-','')
-        line = line.replace('\n','')
+        #line = line.replace('-','')
+        line = line.replace('\n',' ')
         line = line.lower()
         merge_novel.write(line)
     novel.close()

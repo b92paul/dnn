@@ -1,17 +1,3 @@
-//  Copyright 2013 Google Inc. All Rights Reserved.
-//
-//  Licensed under the Apache License, Version 2.0 (the "License");
-//  you may not use this file except in compliance with the License.
-//  You may obtain a copy of the License at
-//
-//      http://www.apache.org/licenses/LICENSE-2.0
-//
-//  Unless required by applicable law or agreed to in writing, software
-//  distributed under the License is distributed on an "AS IS" BASIS,
-//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-//  See the License for the specific language governing permissions and
-//  limitations under the License.
-
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -68,7 +54,6 @@ int main(int argc, char **argv) {
   while (1) {
     for (a = 0; a < N; a++) bestd[a] = 0;
     for (a = 0; a < N; a++) bestw[a][0] = 0;
-    //printf("Enter word or sentence (EXIT to break): ");
     a = 0;
     while (1) {
       st1[a] = fgetc(stdin);
@@ -95,19 +80,21 @@ int main(int argc, char **argv) {
       }
     }
     cn++;
+		// the part of our sim algorithm
     for (a = 0; a < cn; a++) {
       for (b = 0; b < words; b++) if (!strcmp(&vocab[b * max_w], st[a])) break;
       if (b == words) b = -1;
       bi[a] = b;
-      //printf("\nWord: %s  Position in vocabulary: %lld\n", st[a], bi[a]);
     }
-		if(bi[0]==-1){puts("0");continue;}
+		if(bi[0]==-1){puts("0.000000");continue;}
     len =0;
 		for (a = 0; a < size; a++) vec[a] = M[a + bi[0]*size];
     for (a = 0; a < size; a++) len += vec[a] * vec[a];
     len = sqrt(len);
     for (a = 0; a < size; a++) vec[a] /= len;
-    double best = -1;
+    int bnum = 3;
+		double best[bnum]; // = -1,best2 = -1,best3 = -1,best4 = -1;
+		for(int i=0;i<bnum;i++) best[i] = -1;
 		double now = 0,n_len = 0;
 		for (b = 1; b < cn; b++) {
       if (bi[b] == -1) continue;
@@ -117,9 +104,18 @@ int main(int argc, char **argv) {
 				n_len += M[a+bi[b]*size] * M[a+bi[b]*size];
 			}
 			now /= sqrt(n_len);
-			if(now > best)best = now;
+			for(int i=0;i<bnum;i++){
+				if(now > best[i]){
+					for(int j = bnum-1;j >i;j--)best[j] = best[j-1];
+					best[i] = now;
+					break;
+				}
+			}
+
     }
-		printf("%lf\n",best);
+		double sum_best = 0;
+		for(int i=0;i < bnum; i++) sum_best+=best[i]*(10.0-i)/10.0;
+		printf("%lf\n",sum_best);
   }
   return 0;
 }
