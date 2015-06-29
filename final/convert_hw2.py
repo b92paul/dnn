@@ -15,10 +15,10 @@ else:
         else:
             tmp = line.strip().split(',')
             for j,c in enumerate(tmp[1]):
-								fout.write(lmap[c])
-								if j!=len(tmp[1])-1:
-										fout.write(' ')
-								else:
-										fout.write('\n')
+              fout.write(lmap[c])
+              if j!=len(tmp[1])-1:
+                fout.write(' ')
+              else:
+                fout.write('\n')
             print(tmp[0],tmp[1])
     fout.close()

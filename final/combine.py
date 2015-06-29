@@ -11,6 +11,7 @@ for i,line in enumerate(f_chrmap):
 name = []
 res = []
 title = next(f_name)
+print('OAO')
 #print('title',title)
 f_out.write('id,sequence\n')
 for line1,line2 in zip(f_name,f_res):
