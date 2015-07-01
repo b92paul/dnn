@@ -180,7 +180,7 @@ class NetWork
           //shuffleTrain(BX, BY);
         }
         
-        int num = 2000;
+        int num = 5000;
         if(findModel){
           num = (*param)[0];
           if(i == (*param)[1])break;
@@ -251,10 +251,12 @@ class NetWork
             if(max_number(tmp.col(i)) == (int)ValBatchY(0,i)) num++;
         return num/ValBatchX.cols();
     }
-    void printLabel(const VectorXd& testX,FILE* file){
-      VectorXd tmp = fast_feedforward(testX);
-      int now = max_number(tmp);
-      fprintf(file,"%d\n",now);
+    void printLabel(const MatrixXd& testX,FILE* file){
+      MatrixXd tmp = fast_feedforward(testX);
+      for(int i=0;i<tmp.cols();i++){
+        int now = max_number(tmp.col(i));
+        fprintf(file,"%d\n",now);
+      }
     }  
     int max_number(const VectorXd& y)
     {

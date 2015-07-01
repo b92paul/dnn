@@ -12,8 +12,8 @@ char trainPath[] = "../../data/final/f_train.ark";
 char testPath[]  = "../..//data/final/f_test_hw1.ark";
 char testId[]    = "../../data/merge/test_id2.out";
 #define INPUT_SIZE 69
-#define NN_INPUT_SIZE 345
-#define OUTPUT_SIZE 48 
+#define NN_INPUT_SIZE 621
+#define OUTPUT_SIZE 1943 
 #define TRAIN_READ 112482 // Max is 1124823
 #define TEST_READ 180406 // Max is 180406 166114
 #define MOM 0.0
@@ -23,7 +23,9 @@ char testId[]    = "../../data/merge/test_id2.out";
 #define VAL_SIZE 24823
 #define TIME_DECAY true
 #define TIME_DECAY_NUM 500000.0
-#define NORM 2
+#define NORM 7
+
+char model_name[] = "model_0.5312_0.4448.out";
 /*
 mt19937 rng(0x5EED);
 int randint(int lb, int ub) {
@@ -61,21 +63,22 @@ void csvToMatrix(char* filename,  MatrixXd& out,int length, int cut, double norm
 	fclose(csv);
   //DONE(filename);
 }
-
 void matrixExpansion(MatrixXd& A){
 	printf("%lu %lu\n",A.rows(),A.cols());
-	MatrixXd tmp(A.rows()*5, A.cols());
+  int copy = NN_INPUT_SIZE/INPUT_SIZE;
+	MatrixXd tmp(A.rows()* copy, A.cols());
 	int len = A.rows();
 	int total = A.cols();
 	for(int i=0; i<total;i++){
-		for(int j=0 ;j<=4;j++){
-			int idx = (i - 4 + j*2+total) % total;
+		for(int j=0 ;j< copy;j++){
+			int idx = (i - (copy-1) + j*2+total) % total;
 			tmp.block(j*len,i, len, 1) = A.col(idx);
 		}	
 	}
 	A = tmp;
 	printf("%lu %lu\n",A.rows(),A.cols());
 }
+
 
 
 int main(){
@@ -87,7 +90,7 @@ int main(){
 	layer.push_back(OUTPUT_SIZE);	
 	NetWork nn(layer, NN_INPUT_SIZE, MOM, true);
 	nn.outsize = OUTPUT_SIZE;
-	assert(nn.read_model("model_0.4531_0.3182.out"));
+	assert(nn.read_model(model_name));
 	
 	//read test data
 	
@@ -108,9 +111,12 @@ int main(){
 	fclose(out);
 	*/
 	int idxp = 0;
-	FILE* fileout = fopen("test_prob.out","w");
-	for(int i=0 ;i<testX.cols();i++){
-			nn.printLabel(testX.col(i),fileout);
+	FILE* fileout = fopen("test_model_0.5312_0.4448.out","w");
+	for(int i=0 ;i<testX.cols();i+=128){
+      int msize = ((i+128<testX.cols())?(i+128):testX.cols())-i;
+      assert(msize>0);
+      if((i)%10000==0)printf("read: %d\n",i);
+			nn.printLabel(testX.block(0,i,testX.rows(),msize),fileout);
 	}
 	//nn.printProbAll(testX, fileout);
 	fclose(fileout);
