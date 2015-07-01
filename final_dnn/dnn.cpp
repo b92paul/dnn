@@ -251,7 +251,11 @@ class NetWork
             if(max_number(tmp.col(i)) == (int)ValBatchY(0,i)) num++;
         return num/ValBatchX.cols();
     }
-        
+    void printLabel(const VectorXd& testX,FILE* file){
+      VectorXd tmp = fast_feedforward(testX);
+      int now = max_number(tmp);
+      fprintf(file,"%d\n",now);
+    }  
     int max_number(const VectorXd& y)
     {
         VectorXd::Index maxIndex;
@@ -280,7 +284,7 @@ class NetWork
     }
     bool read_model(char file_name[])
     {
-        char total_file_name[100] ="saved_models/";
+        char total_file_name[100] ="models/";
         fstream file;
         strcat(total_file_name,file_name);
         file.open(total_file_name,ios::in);

@@ -11,7 +11,7 @@ char trainPath[] = "../../data/final/f_train.ark";
 char testPath[]  = "../../data/final/f_test.ark";
 char testId[]    = "../../data/final/test_id.out";
 #define INPUT_SIZE 69
-#define NN_INPUT_SIZE 345
+#define NN_INPUT_SIZE 483
 #define OUTPUT_SIZE 1943
 #define TRAIN_READ 1124823 // Max is 1124823
 #define TEST_READ 166114 // Max is 166114
@@ -22,7 +22,7 @@ char testId[]    = "../../data/final/test_id.out";
 #define VAL_SIZE 24823
 #define TIME_DECAY true
 #define TIME_DECAY_NUM 500000.0
-#define NORM 2
+#define NORM 7
 /*
 mt19937 rng(0x5EED);
 int randint(int lb, int ub) {
@@ -60,12 +60,13 @@ void csvToMatrix(char* filename,  MatrixXd& out,int length, int cut, double norm
 }
 void matrixExpansion(MatrixXd& A){
 	printf("%lu %lu\n",A.rows(),A.cols());
-	MatrixXd tmp(A.rows()*5, A.cols());
+  int copy = NN_INPUT_SIZE/INPUT_SIZE;
+	MatrixXd tmp(A.rows()* copy, A.cols());
 	int len = A.rows();
 	int total = A.cols();
 	for(int i=0; i<total;i++){
-		for(int j=0 ;j<=4;j++){
-			int idx = (i - 4 + j*2+total) % total;
+		for(int j=0 ;j< copy;j++){
+			int idx = (i - (copy-1) + j*2+total) % total;
 			tmp.block(j*len,i, len, 1) = A.col(idx);
 		}	
 	}
@@ -128,8 +129,8 @@ int main(){
   }
 	// new network
 	vector<int> layer;
-	layer.push_back(512);
-	layer.push_back(512);
+	layer.push_back(768);
+	layer.push_back(768);
 	//layer.push_back(150);
 	//layer.push_back(150);
 	//layer.push_back(150);
