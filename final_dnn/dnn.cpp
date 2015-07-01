@@ -246,7 +246,7 @@ class NetWork
     {
         double num=0;
         MatrixXd tmp = fast_feedforward(ValBatchX);
-        #pragma omp parallel for
+        #pragma omp parallel for reduction(+:num)
         for(int i=0;i< tmp.cols();i++)
             if(max_number(tmp.col(i)) == (int)ValBatchY(0,i)) num++;
         return num/ValBatchX.cols();
@@ -257,7 +257,17 @@ class NetWork
         int now = max_number(tmp.col(i));
         fprintf(file,"%d\n",now);
       }
-    }  
+    }
+    void printProbs(const MatrixXd& testX,FILE* file){
+      MatrixXd tmp = fast_feedforward(testX);
+      for(int i=0;i<tmp.cols();i++){
+        double sum = tmp.col(i).sum();
+        for(int j=0;j<tmp.rows();j++){
+          fprintf(file,"%lf ",tmp(j,i)/sum);
+        }
+        fprintf(file,"\n");
+      }
+    }
     int max_number(const VectorXd& y)
     {
         VectorXd::Index maxIndex;
