@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cmath>
 #include <vector>
+#include <string>
 using namespace std;
 const int N = 2000;
 const int state = 1943;
@@ -28,8 +29,21 @@ int arg_max(double list[],int len){
   assert(midx!=-1);
   return midx;
 }
-int main(){
-  FILE* xy_file = fopen("test_prob.out","r");
+string probs_path = "";
+string out_path = "";
+int main(int argc,char* argv[]){
+  if(argc!=3){
+    puts("input file name!!");
+    return 1;
+  } else{
+    probs_path = argv[1];
+    out_path = argv[2];
+  }
+  FILE* xy_file = fopen(probs_path.c_str(),"r");
+  if(xy_file==NULL){
+    puts("no such file!!");
+    return 1;
+  }
   FILE* yy_file = fopen("hmm_table.out","r");
   FILE* name_file = fopen("sentence_name_len.out","r");
   int size;
@@ -39,7 +53,7 @@ int main(){
   }
   puts("read yy table done!");
   fclose(yy_file);
-  FILE* fout = fopen("out/test.out","w");
+  FILE* fout = fopen(out_path.c_str(),"w");
   while(~fscanf(name_file,"%s %d",name, &size)){
 
     printf("%s %d\n",name,size);
