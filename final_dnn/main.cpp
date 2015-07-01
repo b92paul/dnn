@@ -7,8 +7,8 @@ using namespace std;
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
 char labelPath[] = "../../data/final/f_1943.lab";
-char trainPath[] = "../../data/final/f_train_n.ark";
-char testPath[]  = "../../data/final/f_test_n.ark";
+char trainPath[] = "../../data/final/f_train.ark";
+char testPath[]  = "../../data/final/f_test.ark";
 char testId[]    = "../../data/final/test_id.out";
 #define INPUT_SIZE 69
 #define NN_INPUT_SIZE 345
@@ -22,7 +22,7 @@ char testId[]    = "../../data/final/test_id.out";
 #define VAL_SIZE 24823
 #define TIME_DECAY true
 #define TIME_DECAY_NUM 500000.0
-#define NORM 1
+#define NORM 2
 /*
 mt19937 rng(0x5EED);
 int randint(int lb, int ub) {
@@ -46,13 +46,13 @@ void csvToMatrix(char* filename,  MatrixXd& out,int length, int cut, double norm
 	double tmp;
   for(int i= 0;i<cut;i++){
     for(int j = 0;j<length;j++){
-      if(~fscanf(csv,"%f",&tmp)){
+      if(~fscanf(csv,"%lf",&tmp)){
         out(j,i) = tmp/norm;
       } else{
         printf("%d %d\n",i,j);
       }
     }
-    if((i+1)%10000==0)printf("read data: %d\n",i+1);
+    if((i+1)%200000==0)printf("read data: %d\n",i+1);
   }
   puts("done");
 	fclose(csv);

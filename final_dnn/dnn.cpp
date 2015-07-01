@@ -39,11 +39,7 @@ VectorXd RandomVet(int row){
 //color for print
 char color[]="\033[0;32m";
 char NC[]="\033[0m";
-inline VectorXd sigmoid(VectorXd x)
-{
-    return ((x*0.4).array().max(0).min(1));
-    //return (((-x).array().exp())+1).array().inverse();
-}
+
 void shuffleTrain(MatrixXd& X,MatrixXd& Y){
   puts("-- In shuffle Train");
   int n = X.cols();
@@ -55,14 +51,15 @@ void shuffleTrain(MatrixXd& X,MatrixXd& Y){
   puts("-- Done shuffle Tatrix");
 }
 inline void flogistic(const MatrixXd& z, MatrixXd& a){
-  a = ((z*0.4).array().max(0).min(1));
+  //a = ((z*0.4).array().max(0).min(1));
+  a = ((-z).array().exp()+1).array().inverse();
   //a = ((z.array() <=2.5 && z.array()>=-2.5).select(z*0.4,1.0));
   return;
 }
 
 void s2p(const MatrixXd& x, MatrixXd& out){
-  out = ( (x.array()<0 || x.array()>1).select(MatrixXd::Zero(x.rows(),x.cols()), 0.4));
-  //out = (x.array()>0 && x.array()<1).select(0.4,1);
+  //out = ( (x.array()<0 || x.array()>1).select(MatrixXd::Zero(x.rows(),x.cols()), 0.4));
+  out = (1-x.array())*(x.array());
   return;
 }
 
@@ -100,12 +97,13 @@ class NetWork
         for(int i=0;i<layers;i++) 
         {
             neuron[i]=Neuron[i];
-            bias[i] = RandomVet(neuron[i]);//VectorXd::Random(neuron[i]) * 3;
+            bias[i] = RandomVet(neuron[i]);
+            //bias[i] = VectorXd::Random(neuron[i]) ;
             int num;
             if(i==0) num=input_size;
             else num=neuron[i-1];
             weight[i] = RandomMat(neuron[i],num)/ sqrt((double)num);
-            //MatrixXd::Random(neuron[i],num)/ sqrt((double)num) *3; //sigma -1 ~ 1
+            //weight[i] = MatrixXd::Random(neuron[i],num)/ sqrt((double)num) *3; //sigma -1 ~ 1
             delta_b_old[i] = VectorXd::Zero(neuron[i]);
             if(i==0) delta_w_old[i] = MatrixXd::Zero(neuron[i],input_size);
             else delta_w_old[i] = MatrixXd::Zero(neuron[i],neuron[i-1]);
@@ -126,7 +124,7 @@ class NetWork
     
     MatrixXd fast_feedforward(MatrixXd x)
     {
-        for(int i=0;i<layers;i++)   flogistic(weight[i]*x+bias[i]*(VectorXd::Ones(x.cols()).T()),x);
+        for(int i=0;i<layers;i++) flogistic(weight[i]*x+bias[i]*(VectorXd::Ones(x.cols()).T()),x);
         return x;
     }
     void fast_back_propagation(const MatrixXd& x,const MatrixXd& y,VectorXd *delta_b,MatrixXd *delta_w)
@@ -182,7 +180,7 @@ class NetWork
           //shuffleTrain(BX, BY);
         }
         
-        int num = 500;
+        int num = 2000;
         if(findModel){
           num = (*param)[0];
           if(i == (*param)[1])break;
@@ -244,7 +242,7 @@ class NetWork
         }
     }
     
-    double fast_eval(MatrixXd ValBatchX, MatrixXd ValBatchY)
+    double fast_eval(const MatrixXd& ValBatchX, const MatrixXd& ValBatchY)
     {
         double num=0;
         MatrixXd tmp = fast_feedforward(ValBatchX);
