@@ -263,7 +263,7 @@ class NetWork
       for(int i=0;i<tmp.cols();i++){
         double sum = tmp.col(i).sum();
         for(int j=0;j<tmp.rows();j++){
-          fprintf(file,"%lf ",tmp(j,i)/sum);
+          fprintf(file,"%.8lf ",log(tmp(j,i)/sum));
         }
         fprintf(file,"\n");
       }
