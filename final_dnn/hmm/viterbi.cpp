@@ -68,7 +68,7 @@ int main(int argc,char* argv[]){
         f = 1-f;
       } else{
         for(int j=0;j<1943;j++){
-          DP[f][j] = -1e30;
+          DP[f][j] = -1e100;
           int midx = -1;
           for(int k=0;k<1943;k++){
             if(DP[1-f][k] +yy_table[k][j] > DP[f][j]){
@@ -77,6 +77,7 @@ int main(int argc,char* argv[]){
             }
           }
           assert(midx!=-1);
+          DP[f][j] += prob[j];
           table[i][j] = midx;
         }
         f = 1-f;
@@ -97,7 +98,6 @@ int main(int argc,char* argv[]){
     //if(sen_num==3)break;
   }
   fclose(fout);
-  assert(sen_num==535);
   fclose(name_file);
   fclose(xy_file);
 }
