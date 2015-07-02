@@ -25,7 +25,7 @@ char testId[]    = "../../data/merge/test_id2.out";
 #define TIME_DECAY_NUM 500000.0
 #define NORM 7
 
-char model_name[] = "model_0.5312_0.4448.out";
+char model_name[] = "model_0.5703_0.4796.out";
 /*
 mt19937 rng(0x5EED);
 int randint(int lb, int ub) {
@@ -79,10 +79,14 @@ void matrixExpansion(MatrixXd& A){
 	printf("%lu %lu\n",A.rows(),A.cols());
 }
 
+string test_path = "hw1/out/test_";
 
-
-int main(){
-
+int main(int argc,char* argv[]){
+  if(argc!=2){
+    puts("input model name!!");
+    return 0;
+  }
+  test_path += argv[1];
 	// new network
 	vector<int> layer;
 	layer.push_back(512);
@@ -90,7 +94,7 @@ int main(){
 	layer.push_back(OUTPUT_SIZE);	
 	NetWork nn(layer, NN_INPUT_SIZE, MOM, true);
 	nn.outsize = OUTPUT_SIZE;
-	assert(nn.read_model(model_name));
+	assert(nn.read_model(argv[1]));
 	
 	//read test data
 	
@@ -111,7 +115,7 @@ int main(){
 	fclose(out);
 	*/
 	int idxp = 0;
-	FILE* fileout = fopen("test_model_0.5312_0.4448.out","w");
+	FILE* fileout = fopen(test_path.c_str(),"w");
 	for(int i=0 ;i<testX.cols();i+=128){
       int msize = ((i+128<testX.cols())?(i+128):testX.cols())-i;
       assert(msize>0);
