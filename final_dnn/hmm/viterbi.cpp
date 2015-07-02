@@ -29,23 +29,23 @@ int arg_max(double list[],int len){
   assert(midx!=-1);
   return midx;
 }
-string probs_path = "";
-string out_path = "";
+string probs_path = "hmm/probs/";
+string out_path = "hmm/out/";
 int main(int argc,char* argv[]){
   if(argc!=3){
-    puts("input file name!!");
+    puts("input probs name, out name!!");
     return 1;
   } else{
-    probs_path = argv[1];
-    out_path = argv[2];
+    probs_path += argv[1];
+    out_path += argv[2];
   }
   FILE* xy_file = fopen(probs_path.c_str(),"r");
   if(xy_file==NULL){
     puts("no such file!!");
     return 1;
   }
-  FILE* yy_file = fopen("hmm_table.out","r");
-  FILE* name_file = fopen("sentence_name_len.out","r");
+  FILE* yy_file = fopen("hmm/hmm_table.out","r");
+  FILE* name_file = fopen("hmm/sentence_name_len.out","r");
   int size;
   char name[100];
   for(int i=0;i<state;i++){

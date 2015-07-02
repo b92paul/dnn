@@ -9,7 +9,7 @@ using Eigen::MatrixXd;
 using Eigen::VectorXd;
 char labelPath[] = "../../data/merge/label_392.out";
 char trainPath[] = "../../data/final/f_train.ark";
-char testPath[]  = "../..//data/final/f_test_hw1.ark";
+char testPath[]  = "../../data/final/f_test_hw1.ark";
 char testId[]    = "../../data/merge/test_id2.out";
 #define INPUT_SIZE 69
 #define NN_INPUT_SIZE 621
@@ -81,37 +81,26 @@ void matrixExpansion(MatrixXd& A){
 
 
 
-int main(){
-
+int main(int argc, char* argv[]){
+  if(argc!=3){
+    puts("model_name test_data_path!!!");
+  }
 	// new network
 	vector<int> layer;
-	layer.push_back(512);
-	layer.push_back(512);
 	layer.push_back(OUTPUT_SIZE);	
 	NetWork nn(layer, NN_INPUT_SIZE, MOM, true);
 	nn.outsize = OUTPUT_SIZE;
-	assert(nn.read_model(model_name));
+	assert(nn.read_model(argv[1]));
 	
 	//read test data
 	
 	MatrixXd testX;
-	csvToMatrix(testPath, testX, INPUT_SIZE, TEST_READ, NORM);
+	csvToMatrix(argv[2], testX, INPUT_SIZE, TEST_READ, NORM);
 	matrixExpansion(testX);
-	/*
-	FILE* out = fopen("out/48_v4.ark","w");
-	int idx = 0;
-	for(int i=0 ;i<word_size.size();i++){
-		fprintf(out,"%s",word_name[i].c_str());
-		for(int j =0;j<word_size[i];j++){
-			VectorXd tmpv(testX.col(idx));
-			fprintf(out,"%d%c",nn.PredictV(tmpv),j==word_size[i]-1?'\n':' ');
-			idx++;
-		}
-	}
-	fclose(out);
-	*/
+	string path = "hmm/probs/";
+  path+= argv[1];
 	int idxp = 0;
-	FILE* fileout = fopen("hmm/probs/test_0.5312_0.4448.out","w");
+	FILE* fileout = fopen(path.c_str(),"w");
 	for(int i=0 ;i<testX.cols();i+=128){
       int msize = ((i+128<testX.cols())?(i+128):testX.cols())-i;
       assert(msize>0);
